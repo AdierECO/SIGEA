@@ -1,0 +1,231 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  nombre    String
+  apellidos String
+  telefono  String?
+  rol       Rol       @default(OPERATIVO)
+  estaActivo Boolean  @default(true)
+
+  intentosFallidos Int?      @default(0)
+  bloqueadoHasta   DateTime?
+  ultimoAcceso     DateTime?
+
+  fechaCreacion DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  turnosCreados   Turno[]        @relation("UsuarioCreadorTurno")
+  turnosAsignados TurnoUsuario[]
+  accesos         Acceso[]
+  backupLogs      BackupLog[]
+
+  filtroAsignadoId Int?
+  filtroAsignado   Filtro?   @relation("FiltroAsignado", fields: [filtroAsignadoId], references: [id], onDelete: SetNull)
+
+  filtrosCreados   Filtro[]  @relation("FiltroCreador")
+
+  auditorias      Auditoria[]
+
+  @@map("usuarios")
+}
+
+enum Rol {
+  SUPERADMIN
+  ADMINISTRADOR
+  SUPERVISOR
+  OPERATIVO
+}
+
+model Identificacion {
+  id        Int      @id @default(autoincrement())
+  tipo      TipoIdentificacion
+  numero    String?   @unique
+  vigente   Boolean  @default(true)
+
+  filtroId  Int?
+  filtro    Filtro?  @relation(fields: [filtroId], references: [id], onDelete: SetNull)
+
+  accesos   Acceso[]
+  auditorias Auditoria[]
+
+  @@map("identificaciones")
+}
+
+enum TipoIdentificacion {
+  INE
+  PASAPORTE
+  LICENCIA
+  CEDULA
+  OTRO
+}
+
+model Acceso {
+  id             Int       @id @default(autoincrement())
+  nombre         String?   
+  apellidos      String?   
+  telefono       String?
+  empresa        String?
+  motivo         String
+  area           String?
+  
+  registradoPor  String?
+
+  identificacionId Int?
+  identificacion   Identificacion? @relation(fields: [identificacionId], references: [id], onDelete: Restrict)
+
+  tiasId             String?      
+  tias               TIAS?        @relation(fields: [tiasId], references: [id], onDelete: SetNull)
+
+  creadoPor      Int
+  creador        Usuario   @relation(fields: [creadoPor], references: [id], onDelete: Cascade)
+
+  turnoId        Int?
+  turno          Turno?    @relation(fields: [turnoId], references: [id])
+
+  filtroId       Int?     
+  filtro         Filtro?   @relation(fields: [filtroId], references: [id], onDelete: SetNull)
+
+  tieneAcompanante Boolean @default(false)
+
+  nombreAcompanante    String?
+  direccionAcompanante String?
+
+  conGrupo        Boolean  @default(false)
+  cantidadGrupo   Int?
+
+  horaEntrada    DateTime  @default(now())
+  horaSalida     DateTime?
+  fechaCreacion  DateTime  @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  auditorias Auditoria[] // relación con auditoria
+
+  @@map("accesos")
+}
+
+model TIAS {
+  id        String    @id   
+  tipo      String    @db.VarChar(5)
+
+  estado   Boolean   @default(true)
+
+  accesos   Acceso[]
+
+  filtroId  Int?
+  filtro    Filtro?  @relation(fields: [filtroId], references: [id], onDelete: SetNull)
+
+  fechaCreacion DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  auditorias Auditoria[]
+
+  @@map("tias")
+}
+
+model Turno {
+  id              Int       @id @default(autoincrement())
+  nombreTurno     String
+  horaInicio      DateTime
+  horaFin         DateTime?
+  estaActivo      Boolean   @default(true)
+
+  creadoPor       Int
+  creador         Usuario   @relation("UsuarioCreadorTurno", fields: [creadoPor], references: [id], onDelete: Cascade)
+
+  accesos         Acceso[]
+  usuarios        TurnoUsuario[] 
+
+  auditorias Auditoria[]
+
+  fechaCreacion   DateTime  @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  @@map("turnos")
+}
+
+model TurnoUsuario {
+  id      Int      @id @default(autoincrement())
+  turnoId Int
+  usuarioId Int
+  turno   Turno    @relation(fields: [turnoId], references: [id], onDelete: Cascade)
+  usuario Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  fechaAsignacion DateTime @default(now())
+
+  @@unique([turnoId, usuarioId])
+}
+
+model BackupLog {
+  id        Int       @id @default(autoincrement())
+  tipo      String    
+  descripcion String
+  usuarioId Int
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  detalles  Json?
+  fechaCreacion DateTime @default(now())
+
+  @@map("backup_logs")
+}
+
+model Filtro {
+  id            Int       @id @default(autoincrement())
+  nombre        String    @unique
+  descripcion   String?
+  ubicacion     String?   
+  estaActivo    Boolean   @default(true)
+
+  cantidad      Int?     
+
+  accesos       Acceso[]
+
+  usuarioCreadorId Int?
+  usuarioCreador   Usuario?  @relation("FiltroCreador", fields: [usuarioCreadorId], references: [id], onDelete: SetNull)
+
+  usuariosAsignados Usuario[] @relation("FiltroAsignado")
+
+  auditorias Auditoria[]
+
+  identificaciones Identificacion[]
+
+  tias        TIAS[]    
+
+  @@map("filtros")
+}
+
+model Auditoria {
+  id        Int       @id @default(autoincrement())
+  tipo      String   
+  accion    String  
+  descripcion String? 
+  
+  usuarioId Int?
+  usuario   Usuario?   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  
+  accesoId  Int?
+  acceso    Acceso?   @relation(fields: [accesoId], references: [id])
+  
+  turnoId   Int?
+  turno     Turno?    @relation(fields: [turnoId], references: [id])
+  
+  identificacionId Int?
+  identificacion Identificacion? @relation(fields: [identificacionId], references: [id])
+  
+  filtroId  Int?
+  filtro    Filtro?   @relation(fields: [filtroId], references: [id])
+
+  tiasId    String?
+  tias      TIAS?     @relation(fields: [tiasId], references: [id])
+
+  fechaCreacion DateTime @default(now())
+
+  @@map("auditoria")
+}

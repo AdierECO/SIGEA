@@ -1,0 +1,514 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TIASController = void 0;
+const data_1 = require("../data");
+class TIASController {
+    // Obtener todos los TIAS
+    static getTIAS = async (req, res) => {
+        try {
+            const { page = 1, limit = 50, search, tipo, filtroId } = req.query;
+            const skip = (Number(page) - 1) * Number(limit);
+            const where = {};
+            if (search) {
+                where.OR = [
+                    { id: { contains: search, mode: 'insensitive' } },
+                    { tipo: { contains: search, mode: 'insensitive' } }
+                ];
+            }
+            if (tipo) {
+                where.tipo = tipo;
+            }
+            if (filtroId && filtroId !== 'todos') {
+                where.filtroId = Number(filtroId);
+            }
+            const [tias, total] = await Promise.all([
+                data_1.prisma.tIAS.findMany({
+                    where,
+                    include: {
+                        filtro: {
+                            select: {
+                                id: true,
+                                nombre: true,
+                                ubicacion: true
+                            }
+                        },
+                        accesos: {
+                            select: {
+                                id: true,
+                                nombre: true,
+                                apellidos: true,
+                                horaEntrada: true,
+                                horaSalida: true
+                            },
+                            orderBy: { fechaCreacion: 'desc' },
+                            take: 5
+                        },
+                        _count: {
+                            select: { accesos: true }
+                        }
+                    },
+                    orderBy: { fechaCreacion: 'desc' },
+                    skip,
+                    take: Number(limit)
+                }),
+                data_1.prisma.tIAS.count({ where })
+            ]);
+            res.json({
+                tias,
+                total,
+                totalPages: Math.ceil(total / Number(limit)),
+                currentPage: Number(page)
+            });
+        }
+        catch (error) {
+            console.error('Error obteniendo TIAS:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    };
+    // Obtener TIAS por ID
+    static getTIASById = async (req, res) => {
+        try {
+            const { id } = req.params;
+            const tias = await data_1.prisma.tIAS.findUnique({
+                where: { id },
+                include: {
+                    filtro: {
+                        select: {
+                            id: true,
+                            nombre: true,
+                            descripcion: true,
+                            ubicacion: true
+                        }
+                    },
+                    accesos: {
+                        include: {
+                            creador: {
+                                select: { nombre: true, apellidos: true }
+                            },
+                            turno: {
+                                select: { id: true, nombreTurno: true }
+                            },
+                            filtro: {
+                                select: { id: true, nombre: true }
+                            }
+                        },
+                        orderBy: { fechaCreacion: 'desc' }
+                    },
+                    _count: {
+                        select: { accesos: true }
+                    }
+                }
+            });
+            if (!tias) {
+                return res.status(404).json({ error: 'TIAS no encontrado' });
+            }
+            res.json(tias);
+        }
+        catch (error) {
+            console.error('Error obteniendo TIAS:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    };
+    // Crear nuevo TIAS (individual)
+    static createTIAS = async (req, res) => {
+        try {
+            const data = req.body;
+            const usuario = req.user;
+            // Validar que el ID sea único
+            const tiasExistente = await data_1.prisma.tIAS.findUnique({
+                where: { id: data.id }
+            });
+            if (tiasExistente) {
+                return res.status(400).json({ error: 'Ya existe un TIAS con este ID' });
+            }
+            // Validar que el tipo tenga máximo 5 caracteres
+            if (data.tipo && data.tipo.length > 5) {
+                return res.status(400).json({ error: 'El tipo no puede tener más de 5 caracteres' });
+            }
+            // Validar filtro si se proporciona
+            if (data.filtroId) {
+                const filtroExistente = await data_1.prisma.filtro.findUnique({
+                    where: { id: data.filtroId }
+                });
+                if (!filtroExistente) {
+                    return res.status(400).json({ error: 'El filtro especificado no existe' });
+                }
+            }
+            const tias = await data_1.prisma.tIAS.create({
+                data: {
+                    id: data.id,
+                    tipo: data.tipo,
+                    estado: data.estado !== undefined ? data.estado : true,
+                    filtroId: data.filtroId || null
+                },
+                include: {
+                    filtro: {
+                        select: {
+                            id: true,
+                            nombre: true,
+                            ubicacion: true
+                        }
+                    },
+                    _count: {
+                        select: { accesos: true }
+                    }
+                }
+            });
+            // Registrar en auditoría
+            await data_1.prisma.auditoria.create({
+                data: {
+                    tipo: 'TIAS',
+                    accion: 'CREACION_TIAS',
+                    descripcion: `Nuevo TIAS creado: ${data.id} - ${data.tipo}`,
+                    usuarioId: usuario.id,
+                    tiasId: tias.id,
+                    filtroId: tias.filtroId
+                }
+            });
+            res.status(201).json(tias);
+        }
+        catch (error) {
+            console.error('Error creando TIAS:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    };
+    // Crear múltiples TIAS por rango
+    static createTIASRango = async (req, res) => {
+        try {
+            const { inicio, fin, tipo, filtroId, prefijo, estado } = req.body;
+            const usuario = req.user;
+            // Validaciones
+            if (inicio === undefined || fin === undefined || !tipo) {
+                return res.status(400).json({
+                    error: 'Los campos inicio, fin y tipo son requeridos'
+                });
+            }
+            if (inicio > fin) {
+                return res.status(400).json({
+                    error: 'El inicio no puede ser mayor al fin'
+                });
+            }
+            const cantidad = fin - inicio + 1;
+            if (cantidad > 1000) {
+                return res.status(400).json({
+                    error: 'No se pueden crear más de 1000 TIAS a la vez'
+                });
+            }
+            if (tipo.length > 5) {
+                return res.status(400).json({
+                    error: 'El tipo no puede tener más de 5 caracteres'
+                });
+            }
+            // Validar filtro si se proporciona - CONVERTIR A NÚMERO
+            let filtroIdNum = null;
+            if (filtroId) {
+                filtroIdNum = Number(filtroId);
+                const filtroExistente = await data_1.prisma.filtro.findUnique({
+                    where: { id: filtroIdNum }
+                });
+                if (!filtroExistente) {
+                    return res.status(400).json({ error: 'El filtro especificado no existe' });
+                }
+            }
+            // Generar IDs únicos
+            const tiasACrear = [];
+            const tiasExistentes = [];
+            for (let i = inicio; i <= fin; i++) {
+                const id = prefijo ? `${prefijo}${i.toString().padStart(3, '0')}` : i.toString();
+                // Verificar si ya existe
+                const existe = await data_1.prisma.tIAS.findUnique({
+                    where: { id }
+                });
+                if (existe) {
+                    tiasExistentes.push(id);
+                }
+                else {
+                    tiasACrear.push({
+                        id,
+                        tipo,
+                        estado: estado !== undefined ? estado : true,
+                        filtroId: filtroIdNum
+                    });
+                }
+            }
+            // Crear los TIAS que no existen
+            let resultadoCreacion = { count: 0 };
+            if (tiasACrear.length > 0) {
+                resultadoCreacion = await data_1.prisma.tIAS.createMany({
+                    data: tiasACrear,
+                    skipDuplicates: true
+                });
+                // Registrar en auditoría
+                await data_1.prisma.auditoria.create({
+                    data: {
+                        tipo: 'TIAS',
+                        accion: 'CREACION_MASIVA_TIAS',
+                        descripcion: `Se crearon ${resultadoCreacion.count} TIAS en el rango ${inicio}-${fin} (tipo: ${tipo})`,
+                        usuarioId: usuario.id,
+                        filtroId: filtroIdNum
+                    }
+                });
+            }
+            res.status(201).json({
+                success: true,
+                message: `Proceso de creación masiva completado`,
+                detalles: {
+                    totalSolicitados: cantidad,
+                    creados: tiasACrear.length,
+                    existentes: tiasExistentes.length,
+                    tiasCreados: resultadoCreacion.count || 0,
+                    idsExistentes: tiasExistentes,
+                    rango: `${inicio} - ${fin}`,
+                    tipo,
+                    prefijo: prefijo || 'Ninguno',
+                    estado: estado !== undefined ? estado : true
+                }
+            });
+        }
+        catch (error) {
+            console.error('Error creando TIAS por rango:', error);
+            res.status(500).json({
+                error: 'Error interno del servidor durante la creación masiva'
+            });
+        }
+    };
+    // Actualizar TIAS
+    static updateTIAS = async (req, res) => {
+        try {
+            const { id } = req.params;
+            const data = req.body;
+            const usuario = req.user;
+            const tiasExistente = await data_1.prisma.tIAS.findUnique({
+                where: { id },
+                include: {
+                    filtro: {
+                        select: { id: true, nombre: true }
+                    }
+                }
+            });
+            if (!tiasExistente) {
+                return res.status(404).json({ error: 'TIAS no encontrado' });
+            }
+            // Validar que el tipo tenga máximo 5 caracteres
+            if (data.tipo && data.tipo.length > 5) {
+                return res.status(400).json({ error: 'El tipo no puede tener más de 5 caracteres' });
+            }
+            // Validar filtro si se proporciona
+            if (data.filtroId !== undefined) {
+                if (data.filtroId) {
+                    const filtroExistente = await data_1.prisma.filtro.findUnique({
+                        where: { id: data.filtroId }
+                    });
+                    if (!filtroExistente) {
+                        return res.status(400).json({ error: 'El filtro especificado no existe' });
+                    }
+                }
+            }
+            const updateData = {};
+            if (data.tipo !== undefined)
+                updateData.tipo = data.tipo;
+            if (data.estado !== undefined)
+                updateData.estado = data.estado;
+            if (data.filtroId !== undefined) {
+                updateData.filtroId = data.filtroId || null;
+            }
+            const tias = await data_1.prisma.tIAS.update({
+                where: { id },
+                data: updateData,
+                include: {
+                    filtro: {
+                        select: {
+                            id: true,
+                            nombre: true,
+                            ubicacion: true
+                        }
+                    },
+                    _count: {
+                        select: { accesos: true }
+                    }
+                }
+            });
+            // Registrar en auditoría
+            await data_1.prisma.auditoria.create({
+                data: {
+                    tipo: 'TIAS',
+                    accion: 'ACTUALIZACION_TIAS',
+                    descripcion: `TIAS ${id} actualizado`,
+                    usuarioId: usuario.id,
+                    tiasId: id,
+                    filtroId: tias.filtroId
+                }
+            });
+            res.json(tias);
+        }
+        catch (error) {
+            console.error('Error actualizando TIAS:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    };
+    // Eliminar TIAS
+    static deleteTIAS = async (req, res) => {
+        try {
+            const { id } = req.params;
+            const usuario = req.user;
+            const tiasExistente = await data_1.prisma.tIAS.findUnique({
+                where: { id },
+                include: {
+                    filtro: {
+                        select: { id: true, nombre: true }
+                    },
+                    _count: {
+                        select: { accesos: true }
+                    }
+                }
+            });
+            if (!tiasExistente) {
+                return res.status(404).json({ error: 'TIAS no encontrado' });
+            }
+            // Verificar si tiene accesos asociados
+            if (tiasExistente._count.accesos > 0) {
+                return res.status(400).json({
+                    error: 'No se puede eliminar el TIAS porque tiene accesos asociados. Elimine o reasigne los accesos primero.'
+                });
+            }
+            // Eliminar el TIAS
+            await data_1.prisma.tIAS.delete({
+                where: { id }
+            });
+            // Registrar en auditoría
+            await data_1.prisma.auditoria.create({
+                data: {
+                    tipo: 'TIAS',
+                    accion: 'ELIMINACION_TIAS',
+                    descripcion: `TIAS ${id} eliminado`,
+                    usuarioId: usuario.id,
+                    filtroId: tiasExistente.filtroId
+                }
+            });
+            res.json({
+                message: 'TIAS eliminado exitosamente',
+                tiasEliminado: {
+                    id: tiasExistente.id,
+                    tipo: tiasExistente.tipo,
+                    filtro: tiasExistente.filtro?.nombre
+                }
+            });
+        }
+        catch (error) {
+            console.error('Error eliminando TIAS:', error);
+            if (error.code === 'P2025') {
+                return res.status(404).json({ error: 'TIAS no encontrado' });
+            }
+            if (error.code === 'P2003') {
+                return res.status(400).json({
+                    error: 'No se puede eliminar el TIAS porque tiene relaciones activas. Elimine todos los accesos asociados primero.'
+                });
+            }
+            res.status(500).json({ error: 'Error interno del servidor al eliminar TIAS' });
+        }
+    };
+    // Obtener TIAS disponibles (que no están siendo usados en accesos activos)
+    static getTIASDisponibles = async (req, res) => {
+        try {
+            const { filtroId } = req.query;
+            console.log('🔍 Buscando TIAS disponibles para filtro:', filtroId);
+            // Construir el filtro WHERE - SOLO TIAS DISPONIBLES (estado: true)
+            const where = {
+                estado: true // Solo TIAS disponibles
+            };
+            // Si se especifica un filtro, agregarlo
+            if (filtroId && filtroId !== 'todos') {
+                where.filtroId = Number(filtroId);
+            }
+            const tias = await data_1.prisma.tIAS.findMany({
+                where,
+                select: {
+                    id: true,
+                    tipo: true,
+                    estado: true,
+                    filtro: {
+                        select: {
+                            id: true,
+                            nombre: true
+                        }
+                    },
+                    _count: {
+                        select: { accesos: true }
+                    }
+                },
+                orderBy: { id: 'asc' }
+            });
+            console.log(`TIAS disponibles: ${tias.length}`);
+            // Obtener estadísticas de TIAS en uso para información adicional
+            const tiasEnUso = await data_1.prisma.tIAS.count({
+                where: {
+                    estado: false // TIAS ocupadas
+                }
+            });
+            res.json({
+                tias,
+                estadisticas: {
+                    totalDisponibles: tias.length,
+                    totalEnUso: tiasEnUso,
+                    totalTIAS: tias.length + tiasEnUso
+                }
+            });
+        }
+        catch (error) {
+            console.error('Error obteniendo TIAS disponibles:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    };
+    // Obtener estadísticas de TIAS
+    static getEstadisticasTIAS = async (req, res) => {
+        try {
+            const [totalTIAS, tiasActivos, tiasInactivos, tiasConAccesos, tiasSinAccesos, tiasPorFiltro] = await Promise.all([
+                data_1.prisma.tIAS.count(),
+                data_1.prisma.tIAS.count({ where: { estado: true } }),
+                data_1.prisma.tIAS.count({ where: { estado: false } }),
+                data_1.prisma.tIAS.count({
+                    where: {
+                        accesos: {
+                            some: {}
+                        }
+                    }
+                }),
+                data_1.prisma.tIAS.count({
+                    where: {
+                        accesos: {
+                            none: {}
+                        }
+                    }
+                }),
+                data_1.prisma.tIAS.groupBy({
+                    by: ['filtroId'],
+                    where: {
+                        filtroId: { not: null }
+                    },
+                    _count: {
+                        id: true
+                    }
+                })
+            ]);
+            res.json({
+                totalTIAS,
+                tiasActivos,
+                tiasInactivos,
+                tiasConAccesos,
+                tiasSinAccesos,
+                tiasPorFiltro: tiasPorFiltro.map(item => ({
+                    filtroId: item.filtroId,
+                    cantidad: item._count.id
+                })),
+                porcentajeUtilizacion: totalTIAS > 0 ? (tiasConAccesos / totalTIAS * 100).toFixed(1) + '%' : '0%',
+                porcentajeActivos: totalTIAS > 0 ? (tiasActivos / totalTIAS * 100).toFixed(1) + '%' : '0%'
+            });
+        }
+        catch (error) {
+            console.error('Error obteniendo estadísticas de TIAS:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    };
+}
+exports.TIASController = TIASController;
+//# sourceMappingURL=tias.Controller.js.map
