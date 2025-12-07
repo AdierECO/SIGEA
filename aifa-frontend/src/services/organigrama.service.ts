@@ -1,7 +1,7 @@
 import type {TipoRequerimientoAcompanante } from '../data/Organigrama';
 import { organigrama } from '../data/Organigrama';
 
-// Función para obtener el requerimiento de acompañante
+// Función para obtener el requerimiento del escolta
 export const obtenerRequerimientoAcompanante = (
   direccion: string,
   subdireccion: string = "",
@@ -38,7 +38,7 @@ export const obtenerRequerimientoAcompanante = (
   return gerenciaEncontrada.requiereAcompanante;
 };
 
-// Función para verificar si el área seleccionada requiere acompañante
+// Función para verificar si el área seleccionada requiere escolta
 export const requiereAcompanante = (
   direccion: string,
   subdireccion: string = "",

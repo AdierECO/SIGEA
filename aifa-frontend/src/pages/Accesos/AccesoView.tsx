@@ -108,7 +108,7 @@ const AccesoView: React.FC = () => {
     };
   };
 
-  // Función para separar la dirección del acompañante
+  // Función para separar la dirección del escolta
   const parseAcompananteComponents = (direccionString: string | null) => {
     if (!direccionString) return { direccion: null, subdireccion: null, gerencia: null };
 
@@ -164,7 +164,7 @@ const AccesoView: React.FC = () => {
       return false;
     }
 
-    // Solo OPERATIVOS con el mismo filtro pueden registrar salida
+    // Solo OPERATIVOS con el mismo control de acceso pueden registrar salida
     if (usuario?.rol === 'OPERATIVO') {
       if (usuario.filtroAsignadoId && acceso.filtroId === usuario.filtroAsignadoId) {
         return true;
@@ -193,7 +193,7 @@ const AccesoView: React.FC = () => {
     }
 
     return {
-      texto: 'Sin filtro asignado',
+      texto: 'Sin control de acceso asignado',
       clase: 'text-gray-500',
       tipo: 'sin_filtro' as const
     };
@@ -279,7 +279,7 @@ const AccesoView: React.FC = () => {
   const mensajeRestriccion = getMensajeRestriccion();
   const esEspecial = esAccesoEspecial();
 
-  //  Parsear los componentes del área y acompañante
+  //  Parsear los componentes del área y escolta
   const areaComponents = parseAreaComponents(acceso.area || '');
   const acompananteComponents = parseAcompananteComponents(acceso.direccionAcompanante || '');
 
@@ -399,20 +399,20 @@ const AccesoView: React.FC = () => {
                   )}
                 </div>
 
-                <div><strong>Acompañante:</strong> {acceso.tieneAcompanante ? 'Sí' : 'No'}</div>
+                <div><strong>Escolta:</strong> {acceso.tieneAcompanante ? 'Sí' : 'No'}</div>
               </div>
             </div>
 
-            {/* Información del Acompañante con Dirección Separada */}
+            {/* Información del Escolta con Dirección Separada */}
             {acceso.tieneAcompanante && (
               <div className="bg-orange-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold text-orange-900 mb-4">👥 Información del Acompañante</h3>
+                <h3 className="text-lg font-semibold text-orange-900 mb-4">👥 Información del Escolta</h3>
                 <div className="space-y-3 text-sm sm:text-base">
                   <div><strong>Nombre:</strong> {acceso.nombreAcompanante || 'No especificado'}</div>
 
-                  {/*  Dirección del acompañante separada en componentes */}
+                  {/*  Dirección del escolta separada en componentes */}
                   <div className="space-y-2">
-                    <div><strong>Dirección Perteneciente:</strong></div>
+                    <div><strong>Ubicación Perteneciente:</strong></div>
                     {acompananteComponents.direccion && (
                       <div className="ml-4">
                         <strong>Dirección:</strong> {acompananteComponents.direccion}
@@ -475,7 +475,7 @@ const AccesoView: React.FC = () => {
 
             {/* Información del Filtro */}
             <div className="bg-indigo-50 p-4 rounded-lg">
-              <h3 className="text-lg font-semibold text-indigo-900 mb-4">🚪 Filtro de Acceso</h3>
+              <h3 className="text-lg font-semibold text-indigo-900 mb-4">🚪Control de acceso del Acceso</h3>
               <div className="space-y-3 text-sm sm:text-base">
                 {filtroInfo.tipo === 'directo' && acceso.filtro && acceso.tias ? (
                   <>
@@ -495,7 +495,7 @@ const AccesoView: React.FC = () => {
                         {acceso.filtro.estaActivo ? 'ACTIVO' : 'INACTIVO'}
                       </span>
                     </div>
-                    <div><strong>TIA: </strong> {acceso.tias.id}</div>
+                    <div><strong>Gafete de visitante: </strong> {acceso.tias.id}</div>
                   </>
                 ) : filtroInfo.tipo === 'del_operativo' && creadorData?.filtroAsignado ? (
                   <>
@@ -508,7 +508,7 @@ const AccesoView: React.FC = () => {
                     )}
                   </>
                 ) : (
-                  <div className="text-gray-500 italic">No se asignó ningún filtro específico</div>
+                  <div className="text-gray-500 italic">No se asignó ningún control de acceso específico</div>
                 )}
               </div>
             </div>
@@ -578,7 +578,7 @@ const AccesoView: React.FC = () => {
                 <div className="space-y-2">
                   <div><strong>Última actualización:</strong> {new Date(acceso.fechaActualizacion).toLocaleString()}</div>
                   <div><strong>Turno asignado:</strong> <span className={turnoInfo.clase}>{turnoInfo.texto}</span></div>
-                  <div><strong>Filtro asignado:</strong> <span className={filtroInfo.clase}>{filtroInfo.texto}</span></div>
+                  <div><strong>Control de acceso asignado:</strong> <span className={filtroInfo.clase}>{filtroInfo.texto}</span></div>
                 </div>
               </div>
             </div>

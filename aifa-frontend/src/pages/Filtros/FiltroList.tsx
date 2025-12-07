@@ -43,7 +43,7 @@ const FiltroList: React.FC = () => {
   const handleDelete = async (id: number, nombre: string) => {
     const result = await Swal.fire({
       title: '¿Eliminar filtro?',
-      text: `¿Estás seguro de eliminar el filtro "${nombre}"?`,
+      text: `¿Estás seguro de eliminar el Control de acceso "${nombre}"?`,
       icon: 'warning',
       showCancelButton: true,
       footer: 'Esta acción es permanente y no se puede deshacer.',
@@ -62,7 +62,7 @@ const FiltroList: React.FC = () => {
 
       await Swal.fire({
         title: '¡Eliminado!',
-        text: `El filtro "${nombre}" ha sido eliminado exitosamente`,
+        text: `El Control de acceso "${nombre}" ha sido eliminado exitosamente`,
         icon: 'success',
         confirmButtonColor: '#10b981',
         timer: 2000,
@@ -72,14 +72,14 @@ const FiltroList: React.FC = () => {
 
       fetchFiltros();
     } catch (error: any) {
-      console.error('Error deleting filtro:', error);
+      console.error('Error deleting Control de acceso:', error);
 
       await Swal.fire({
         title: 'Error',
         html: `
         <div class="text-left">
           <p>No se pudo eliminar el filtro:</p>
-          <p class="mt-1 text-red-600 font-medium">${error.response?.data?.error || 'Error al eliminar el filtro'}</p>
+          <p class="mt-1 text-red-600 font-medium">${error.response?.data?.error || 'Error al eliminar el Control de acceso'}</p>
         </div>
       `,
         icon: 'error',
@@ -91,8 +91,8 @@ const FiltroList: React.FC = () => {
   const handleToggleStatus = async (id: number, nombre: string, currentStatus: boolean) => {
     const action = currentStatus ? 'Desactivar' : 'Activar';
     const result = await Swal.fire({
-      title: `¿${action} filtro?`,
-      text: `¿Está seguro de ${action} el filtro "${nombre}"?`,
+      title: `¿${action} Control de acceso?`,
+      text: `¿Está seguro de ${action} el Control de acceso "${nombre}"?`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#10b981',
@@ -108,7 +108,7 @@ const FiltroList: React.FC = () => {
           await api.put(`/filtros/${id}`, { estaActivo: false });
           Swal.fire({
             icon: "success",
-            text: `Filtro "${nombre}" desactivado exitosamente`,
+            text: `Control de acceso "${nombre}" desactivado exitosamente`,
             title: "Aviso",
             timer: 2000,
             timerProgressBar: true,
@@ -118,7 +118,7 @@ const FiltroList: React.FC = () => {
           await api.put(`/filtros/${id}`, { estaActivo: true });
           Swal.fire({
             icon: "success",
-            text: `Filtro "${nombre}" activado exitosamente`,
+            text: `Control de acceso "${nombre}" activado exitosamente`,
             title: "Aviso",
             timer: 2000,
             timerProgressBar: true,
@@ -127,8 +127,8 @@ const FiltroList: React.FC = () => {
         }
         fetchFiltros();
       } catch (error: any) {
-        console.error('Error updating filtro status:', error);
-        alert(error.response?.data?.error || `Error al ${action} el filtro`);
+        console.error('Error updating Control de acceso status:', error);
+        alert(error.response?.data?.error || `Error al ${action} el Control de acceso`);
       }
     }
   };
@@ -148,7 +148,7 @@ const FiltroList: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Cargando filtros...</div>
+        <div className="text-lg">Cargando Controles de acceso...</div>
       </div>
     );
   }
@@ -161,15 +161,15 @@ const FiltroList: React.FC = () => {
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">🎛️ Gestión de Filtros</h1>
-              <p className="text-gray-600 mt-2">Administre los filtros del sistema</p>
+              <h1 className="text-3xl font-bold text-gray-900">🎛️ Gestión de Controles de acceso</h1>
+              <p className="text-gray-600 mt-2">Administre los Controles de acceso del sistema</p>
             </div>
             {isAdmin && (
               <button
                 onClick={handleCreate}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold"
               >
-                + Crear Filtro
+                + Crear Control de acceso
               </button>
             )}
           </div>
@@ -202,13 +202,13 @@ const FiltroList: React.FC = () => {
             </div>
             <div className="flex items-end">
               <div className="text-sm text-gray-500">
-                Mostrando {filteredFiltros.length} de {filtros.length} filtros
+                Mostrando {filteredFiltros.length} de {filtros.length} Controles de acceso
               </div>
             </div>
           </div>
         </div>
 
-        {/* Tabla de Filtros */}
+        {/* Tabla de Controles de acceso */}
         <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -317,7 +317,7 @@ const FiltroList: React.FC = () => {
           {filteredFiltros.length === 0 && (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">🎛️</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No se encontraron filtros</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No se encontraron Controles de acceso</h3>
               <p className="text-gray-600 mb-6">
                 {searchTerm || filterActive !== 'all'
                   ? 'Intente ajustar los filtros de búsqueda'
@@ -329,7 +329,7 @@ const FiltroList: React.FC = () => {
                   onClick={handleCreate}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold"
                 >
-                  + Crear Primer Filtro
+                  + Crear Primer Control de acceso
                 </button>
               )}
             </div>

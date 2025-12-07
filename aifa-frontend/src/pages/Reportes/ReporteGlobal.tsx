@@ -176,7 +176,7 @@ const ReporteGlobal: React.FC = () => {
   }, {});
 
   const accesosPorFiltro = agrupacionesBackend?.porFiltro || datos.accesos.reduce((acc: Record<string, number>, acceso) => {
-    const filtroNombre = acceso.filtro?.nombre || 'Sin filtro';
+    const filtroNombre = acceso.filtro?.nombre || 'Control de acceso';
     acc[filtroNombre] = (acc[filtroNombre] || 0) + 1;
     return acc;
   }, {});
@@ -217,7 +217,7 @@ const ReporteGlobal: React.FC = () => {
                   to="/reportes/filtros"
                   className="px-4 py-2 rounded-lg text-sm font-semibold bg-white text-blue-600 border border-blue-600 hover:bg-blue-50"
                 >
-                  🚪 Vista por Filtros
+                  🚪 Vista por Control de acceso
                 </Link>
                 <Link 
                   to="/reportes/personas"
@@ -295,7 +295,7 @@ const ReporteGlobal: React.FC = () => {
 
           <div className="bg-white rounded-lg p-6 shadow-sm border">
             <div className="text-2xl font-bold text-purple-600">{estadisticas.conAcompanante}</div>
-            <div className="text-sm text-gray-600">Con Acompañante</div>
+            <div className="text-sm text-gray-600">Con Escolta</div>
             <div className="text-xs text-blue-600 mt-1">
               {estadisticas.totalAccesos > 0 ? 
                 `${((estadisticas.conAcompanante / estadisticas.totalAccesos) * 100).toFixed(1)}% de visitas` 
@@ -378,7 +378,7 @@ const ReporteGlobal: React.FC = () => {
 
           {/* Accesos por Filtro */}
           <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">🚪 Accesos por Filtro</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">🚪 Accesos por Control de acceso</h3>
             <div className="space-y-3 max-h-80 overflow-y-auto">
               {Object.entries(accesosPorFiltro)
                 .sort(([,a], [,b]) => (b as number) - (a as number))
@@ -438,7 +438,7 @@ const ReporteGlobal: React.FC = () => {
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-purple-50 rounded">
-                <span className="font-medium">Visitantes con acompañante:</span>
+                <span className="font-medium">Visitantes con escolta:</span>
                 <span className="font-semibold">
                   {estadisticas.totalAccesos > 0 ? 
                     `${((estadisticas.conAcompanante / estadisticas.totalAccesos) * 100).toFixed(1)}%` 
@@ -446,7 +446,7 @@ const ReporteGlobal: React.FC = () => {
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-gray-50 rounded">
-                <span className="font-medium">Accesos con filtro asignado:</span>
+                <span className="font-medium">Accesos con Control de acceso asignado:</span>
                 <span className="font-semibold">
                   {estadisticas.totalAccesos > 0 ? 
                     `${((estadisticas.accesosConFiltro / estadisticas.totalAccesos) * 100).toFixed(1)}%` 

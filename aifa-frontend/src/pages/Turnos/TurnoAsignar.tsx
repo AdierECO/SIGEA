@@ -71,7 +71,7 @@ const TurnoAsignar: React.FC = () => {
       const usuariosAsignados = turnoRes.data.usuarios?.map((tu: any) => tu.usuarioId) || [];
       setSelectedUsers(usuariosAsignados);
 
-      // Cargar los filtros asignados desde los datos de los usuarios
+      // Cargar los Controles de acceso asignados desde los datos de los usuarios
       const filtrosIniciales: { [key: number]: number | null } = {};
 
       usuariosAsignados.forEach((userId: number) => {
@@ -91,14 +91,14 @@ const TurnoAsignar: React.FC = () => {
     }
   };
 
-  // Función para limpiar filtro de un usuario
+  // Función para limpiar Control de acceso de un usuario
   const limpiarFiltroUsuario = async (usuarioId: number) => {
     try {
       await api.put(`/usuarios/${usuarioId}`, {
         filtroAsignadoId: null
       });
     } catch (error) {
-      console.error(`Error eliminando filtro del usuario ${usuarioId}:`, error);
+      console.error(`Error eliminando Control de acceso del usuario ${usuarioId}:`, error);
       throw error;
     }
   };
@@ -123,7 +123,7 @@ const TurnoAsignar: React.FC = () => {
           usuarioIds: selectedUsers
         });
 
-        // 2. Luego actualizar los filtros de cada usuario
+        // 2. Luego actualizar los Controles de acceso de cada usuario
         const updatePromises = selectedUsers.map(userId => {
           const filtroId = userFiltros[userId];
           return api.put(`/usuarios/${userId}`, {
@@ -155,7 +155,7 @@ const TurnoAsignar: React.FC = () => {
   const handleDesasignarTodos = async () => {
     const result = await Swal.fire({
       title: `¿Gestionar Turno?`,
-      text: '¿Está seguro de desasignar TODOS los usuarios de este turno? También se eliminarán sus filtros asignados.',
+      text: '¿Está seguro de desasignar TODOS los usuarios de este turno? También se eliminarán sus Controles de acceso asignados.',
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#10b981',
@@ -166,7 +166,7 @@ const TurnoAsignar: React.FC = () => {
     });
     if (result.isConfirmed) {
       try {
-        // 1. Primero limpiar los filtros de todos los usuarios seleccionados
+        // 1. Primero limpiar los Controles de acceso de todos los usuarios seleccionados
         const limpiarFiltrosPromises = selectedUsers.map(userId =>
           limpiarFiltroUsuario(userId)
         );
@@ -181,7 +181,7 @@ const TurnoAsignar: React.FC = () => {
         setUserFiltros({});
         Swal.fire({
           icon: "success",
-          text: "Todos los usuarios han sido desasignados y sus filtros eliminados",
+          text: "Todos los usuarios han sido desasignados y sus Controles de acceso eliminados",
           title: "Aviso",
           timer: 2000,
           timerProgressBar: true,
@@ -201,7 +201,7 @@ const TurnoAsignar: React.FC = () => {
 
     const result = await Swal.fire({
       title: `¿Gestionar Turno?`,
-      text: `¿Está seguro de desasignar a ${usuario.nombre} ${usuario.apellidos} de este turno? También se eliminará su filtro asignado.`,
+      text: `¿Está seguro de desasignar a ${usuario.nombre} ${usuario.apellidos} de este turno? También se eliminará su Control de acceso asignado.`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#10b981',
@@ -213,7 +213,7 @@ const TurnoAsignar: React.FC = () => {
 
     if (result.isConfirmed) {
       try {
-        // 1. Primero limpiar el filtro del usuario
+        // 1. Primero limpiar el Control de acceso del usuario
         await limpiarFiltroUsuario(usuarioId);
 
         // 2. Luego desasignar del turno
@@ -224,7 +224,7 @@ const TurnoAsignar: React.FC = () => {
         // Actualizar el estado local inmediatamente
         setSelectedUsers(prev => prev.filter(id => id !== usuarioId));
 
-        // Remover el filtro del usuario desasignado
+        // Remover el Control de acceso del usuario desasignado
         setUserFiltros(prev => {
           const newFiltros = { ...prev };
           delete newFiltros[usuarioId];
@@ -233,7 +233,7 @@ const TurnoAsignar: React.FC = () => {
 
         Swal.fire({
           icon: "success",
-          text: "Usuario desasignado y filtro eliminado exitosamente",
+          text: "Usuario desasignado y Control de acceso eliminado exitosamente",
           title: "Aviso",
           timer: 2000,
           timerProgressBar: true,
@@ -420,13 +420,13 @@ const TurnoAsignar: React.FC = () => {
   };
 
   const getFiltroNombre = (filtroId: number | null) => {
-    if (!filtroId) return 'Sin filtro asignado';
+    if (!filtroId) return 'Sin Control de acceso asignado';
     const filtro = filtros.find(f => f.id === filtroId);
-    return filtro ? filtro.nombre : 'Filtro no encontrado';
+    return filtro ? filtro.nombre : 'Control de acceso no encontrado';
   };
 
   const getUsuarioFiltroNombre = (usuario: Usuario) => {
-    return usuario.filtroAsignado ? usuario.filtroAsignado.nombre : 'Sin filtro asignado';
+    return usuario.filtroAsignado ? usuario.filtroAsignado.nombre : 'Sin Control de acceso asignado';
   };
 
   if (loading) {
@@ -552,10 +552,10 @@ const TurnoAsignar: React.FC = () => {
             )}
           </div>
 
-          {/* Selección de Usuarios y Filtros - Solo disponible para admins y turnos activos */}
+          {/* Selección de Usuarios y Controles de acceso - Solo disponible para admins y turnos activos */}
           {isAdmin && turno.estaActivo && (
             <div className="bg-green-50 p-4 rounded-lg mb-6">
-              <h3 className="text-lg font-semibold text-green-900 mb-3">Asignar Personal y Filtros</h3>
+              <h3 className="text-lg font-semibold text-green-900 mb-3">Asignar Personal y Control de acceso</h3>
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -626,7 +626,7 @@ const TurnoAsignar: React.FC = () => {
                               </div>
                               {usuario.filtroAsignado && (
                                 <div className="text-xs text-green-600 mt-1 truncate">
-                                  Filtro actual: {getUsuarioFiltroNombre(usuario)}
+                                  Control de acceso actual: {getUsuarioFiltroNombre(usuario)}
                                 </div>
                               )}
                             </div>
@@ -637,7 +637,7 @@ const TurnoAsignar: React.FC = () => {
                   )}
                 </div>
 
-                {/* Usuarios Seleccionados con opción de asignar filtro y desasignar individual */}
+                {/* Usuarios Seleccionados con opción de asignar Control de acceso y desasignar individual */}
                 {selectedUsers.length > 0 && (
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <div className="text-sm text-blue-700 font-medium mb-2">
@@ -656,7 +656,7 @@ const TurnoAsignar: React.FC = () => {
                                 <div className="text-gray-500 text-sm">{usuario.email}</div>
                                 {usuario.filtroAsignado && (
                                   <div className="text-xs text-green-600">
-                                    Filtro actual del usuario: {getUsuarioFiltroNombre(usuario)}
+                                    Control de acceso actual del usuario: {getUsuarioFiltroNombre(usuario)}
                                   </div>
                                 )}
                               </div>
@@ -677,14 +677,14 @@ const TurnoAsignar: React.FC = () => {
                             {/* Selector de Filtro para el usuario */}
                             <div className="mt-2">
                               <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Asignar Nuevo Filtro:
+                                Asignar Nuevo Control de acceso:
                               </label>
                               <select
                                 value={userFiltros[usuario.id] || ''}
                                 onChange={(e) => handleFiltroChange(usuario.id, e.target.value ? parseInt(e.target.value) : null)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                               >
-                                <option value="">Sin filtro asignado</option>
+                                <option value="">Sin Control de acceso asignado</option>
                                 {filtros.map(filtro => (
                                   <option key={filtro.id} value={filtro.id}>
                                     {filtro.nombre} {filtro.ubicacion ? `- ${filtro.ubicacion}` : ''}
@@ -706,8 +706,8 @@ const TurnoAsignar: React.FC = () => {
                   <div className="flex items-start">
                     <div className="text-yellow-600 mr-2 mt-0.5">💡</div>
                     <div className="text-sm text-yellow-800">
-                      <strong>Nota:</strong> Seleccione usuarios, asigne un filtro a cada uno y luego haga clic en "Confirmar Asignación" para guardar los cambios.
-                      Los filtros asignados determinarán qué accesos puede gestionar cada usuario.
+                      <strong>Nota:</strong> Seleccione usuarios, asigne un Control de acceso a cada uno y luego haga clic en "Confirmar Asignación" para guardar los cambios.
+                      Los Controles de acceso asignados determinarán qué accesos puede gestionar cada usuario.
                     </div>
                   </div>
                 </div>

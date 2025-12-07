@@ -39,7 +39,7 @@ const TurnoList: React.FC = () => {
     }
   };
 
-  // Función para obtener usuario con filtro asignado
+  // Función para obtener usuario con Control de acceso asignado
   const getUsuarioConFiltro = (usuarioId: number) => {
     return usuarios.find(u => u.id === usuarioId);
   };
@@ -143,7 +143,7 @@ const TurnoList: React.FC = () => {
     return turno.usuarios?.length || 0;
   };
 
-  // Función para obtener usuarios con sus filtros asignados
+  // Función para obtener usuarios con sus Controles de acceso asignados
   const getUsuariosConFiltro = (turno: Turno) => {
     if (!turno.usuarios || turno.usuarios.length === 0) return [];
 
@@ -156,7 +156,7 @@ const TurnoList: React.FC = () => {
     });
   };
 
-  // Contar usuarios con filtro en un turno
+  // Contar usuarios con Control de acceso en un turno
   const contarUsuariosConFiltro = (turno: Turno) => {
     const usuariosConFiltro = getUsuariosConFiltro(turno).filter(tu =>
       tu.usuario?.filtroAsignado
@@ -229,7 +229,7 @@ const TurnoList: React.FC = () => {
             <div className="text-xl sm:text-2xl font-bold text-orange-600">
               {turnos.reduce((acc, turno) => acc + contarUsuariosConFiltro(turno), 0)}
             </div>
-            <div className="text-xs sm:text-sm text-gray-600">Usuarios con Filtro</div>
+            <div className="text-xs sm:text-sm text-gray-600">Usuarios con Control de acceso</div>
           </div>
         </div>
 

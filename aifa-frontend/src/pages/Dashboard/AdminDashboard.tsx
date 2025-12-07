@@ -155,7 +155,7 @@ const AdminDashboard: React.FC = () => {
           >
             <div className="text-emerald-200 text-sm font-semibold">ID Retenidas</div>
             <div className="text-xl sm:text-2xl font-bold text-white mt-1">{stats.identificacionesRetenidas}</div>
-            <div className="text-yellow-400 text-xs mt-1">Todos los filtros</div>
+            <div className="text-yellow-400 text-xs mt-1">Todos los Controles de acceso</div>
           </div>
 
           <div
@@ -171,7 +171,7 @@ const AdminDashboard: React.FC = () => {
             onClick={navigateToGestionFiltros}
             className="bg-white/10 backdrop-blur-lg rounded-2xl p-3 sm:p-4 border border-white/20 cursor-pointer hover:bg-white/20 transition duration-200 col-span-2 lg:col-span-1"
           >
-            <div className="text-emerald-200 text-sm font-semibold">Filtros Activos</div>
+            <div className="text-emerald-200 text-sm font-semibold">Controles de acceso Activos</div>
             <div className="text-xl sm:text-2xl font-bold text-white mt-1">{stats.filtrosActivos}</div>
             <div className="text-indigo-400 text-xs mt-1">Puntos de control</div>
           </div>
@@ -202,17 +202,17 @@ const AdminDashboard: React.FC = () => {
                 className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center"
               >
                 <span className="mr-3">🔍</span>
-                Gestionar Filtros
+                Gestionar Control de acceso
               </button>
               <button
                 onClick={navigateToTIAS}
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center"
               >
                 <span className="mr-3">🪪</span>
-                Gestionar TIAS
+                Gestionar Gafetes de visitante
               </button>
               <p className="text-emerald-200 text-sm text-center mt-2">
-                Administrar usuarios, turnos, filtros y accesos del sistema
+                Administrar usuarios, turnos, Controles de acceso y accesos del sistema
               </p>
             </div>
           </div>
@@ -268,7 +268,7 @@ const AdminDashboard: React.FC = () => {
               Importar Registros SQL
             </button>
             <p className="text-emerald-200 text-sm text-center">
-              Importar registros de otros filtros para información unificada
+              Importar registros de otros Controles de acceso para información unificada
             </p>
           </div>
         </div>

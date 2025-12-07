@@ -28,7 +28,7 @@ const AccesoCreate: React.FC = () => {
   const [cargandoTIAS, setCargandoTIAS] = useState(false);
   const [requiereAcompananteArea, setRequiereAcompananteArea] = useState(false);
 
-  // Hooks del organigrama para Área de Visita y Acompañante
+  // Hooks del organigrama para Área de Visita y Escolta
   const organigramaAreaVisita = useOrganigrama();
   const organigramaAcompanante = useOrganigrama();
 
@@ -81,7 +81,7 @@ const AccesoCreate: React.FC = () => {
     }
   }, [filtroOperativo?.id]);
 
-  // Efecto para verificar requerimiento de acompañante cuando cambia el área
+  // Efecto para verificar requerimiento de Escolta cuando cambia el área
   useEffect(() => {
     const direccion = organigramaAreaVisita.direccionSeleccionada;
     const subdireccion = organigramaAreaVisita.subdireccionSeleccionada;
@@ -91,7 +91,7 @@ const AccesoCreate: React.FC = () => {
       const requiere = requiereAcompanante(direccion, subdireccion, gerencia);
       setRequiereAcompananteArea(requiere);
       
-      // Si el área requiere acompañante, forzar el checkbox
+      // Si el área requiere Escolta, forzar el checkbox
       if (requiere) {
         setFormData(prev => ({ 
           ...prev, 
@@ -178,7 +178,7 @@ const AccesoCreate: React.FC = () => {
       setTiasDisponibles(tias);
 
     } catch (error) {
-      console.error('❌ Error cargando TIAS disponibles:', error);
+      console.error('❌ Error cargando Gafetes de visita disponibles:', error);
       setTiasDisponibles([]);
     } finally {
       setCargandoTIAS(false);
@@ -217,22 +217,22 @@ const AccesoCreate: React.FC = () => {
       return;
     }
 
-    // Validación de acompañante - AHORA también verifica si el área lo requiere
+    // Validación de escolta - AHORA también verifica si el área lo requiere
     if (requiereAcompananteArea && !formData.tieneAcompanante) {
-      showAlert('Error', 'Esta área requiere acompañante obligatoriamente', 'error');
+      showAlert('Error', 'Esta área requiere escolta obligatoriamente', 'error');
       return;
     }
 
     if (formData.tieneAcompanante) {
       if (!formData.nombreAcompanante?.trim()) {
-        showAlert('Error', 'Nombre del acompañante es requerido cuando se selecciona "Viene con acompañante"', 'error');
+        showAlert('Error', 'Nombre del escolta es requerido cuando se selecciona "Viene con escolta"', 'error');
         return;
       }
 
-      // Validar dirección administrativa del acompañante
+      // Validar dirección administrativa del escolta
       const direccionAcompananteCompleta = organigramaAcompanante.getDireccionCompleta();
       if (!direccionAcompananteCompleta) {
-        showAlert('Error', 'Debe seleccionar al menos una dirección administrativa para el acompañante', 'error');
+        showAlert('Error', 'Debe seleccionar al menos una dirección administrativa para el escolta', 'error');
         return;
       }
     }
@@ -243,9 +243,9 @@ const AccesoCreate: React.FC = () => {
       return;
     }
 
-    // Validar que se haya seleccionado un TIAS disponible
+    // Validar que se haya seleccionado un gafete de viisita disponible
     if (!formData.tiasId) {
-      showAlert('Error', 'Debe seleccionar un TIAS disponible', 'error');
+      showAlert('Error', 'Debe seleccionar un Gafete de visitante disponible', 'error');
       return;
     }
 
@@ -356,11 +356,11 @@ const AccesoCreate: React.FC = () => {
     }));
   };
 
-  // Manejar cambio del checkbox de acompañante
+  // Manejar cambio del checkbox de escolta
   const handleAcompananteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Si el área requiere acompañante, no permitir desmarcar
+    // Si el área requiere escolta, no permitir desmarcar
     if (requiereAcompananteArea && !e.target.checked) {
-      showAlert('Advertencia', 'Esta área requiere acompañante obligatoriamente', 'warning');
+      showAlert('Advertencia', 'Esta área requiere escolta obligatoriamente', 'warning');
       return;
     }
 
@@ -385,7 +385,7 @@ const AccesoCreate: React.FC = () => {
           <div className="bg-white rounded-lg shadow-sm border p-6 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando datos del operativo...</p>
-            <p className="text-sm text-gray-500">Obteniendo filtro y turno asignados</p>
+            <p className="text-sm text-gray-500">Obteniendo control de acceso y turno asignados</p>
           </div>
         </div>
       </div>
@@ -474,10 +474,10 @@ const AccesoCreate: React.FC = () => {
                   />
                 </div>
 
-                {/* TIAS del filtro asignado */}
+                {/* Gafetes de visita del control de acceso asignado */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    TIAS *
+                    GAFETES DE VISITANTE *
                     {cargandoTIAS && (
                       <span className="ml-2 text-blue-600 text-sm font-normal">
                         (Cargando...)
@@ -492,7 +492,7 @@ const AccesoCreate: React.FC = () => {
                     disabled={cargandoTIAS || tiasDisponibles.length === 0}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                   >
-                    <option value="">Seleccione una TIA</option>
+                    <option value="">Seleccione un Gafete de visitante</option>
                     {tiasDisponibles.map(tias => (
                       <option key={tias.id} value={tias.id}>
                         {tias.id}
@@ -503,11 +503,11 @@ const AccesoCreate: React.FC = () => {
                     {filtroOperativo ? (
                       <>
                         {tiasDisponibles.length === 0 && !cargandoTIAS && (
-                          <span className="text-red-600">No hay TIAS disponibles</span>
+                          <span className="text-red-600">No hay Gafetes disponibles</span>
                         )}
                       </>
                     ) : (
-                      <span className="text-red-600">No tiene un filtro asignado</span>
+                      <span className="text-red-600">No tiene un control de acceso asignado</span>
                     )}
                   </div>
                 </div>
@@ -647,11 +647,11 @@ const AccesoCreate: React.FC = () => {
               )}
             </div>
 
-            {/* Acompañante Opcional/Requerido con Organigrama */}
+            {/* Escolta Opcional/Requerido con Organigrama */}
             <div className="bg-orange-50 p-4 rounded-lg">
-              <h3 className="text-lg font-semibold text-orange-900 mb-4">👥 Acompañante</h3>
+              <h3 className="text-lg font-semibold text-orange-900 mb-4">👥 Escolta</h3>
 
-              {/* Checkbox para acompañante */}
+              {/* Checkbox para Escolta */}
               <div className="mb-4">
                 <label className="flex items-center space-x-3">
                   <input
@@ -663,7 +663,7 @@ const AccesoCreate: React.FC = () => {
                     className={`w-4 h-4 ${requiereAcompananteArea ? 'text-red-600 cursor-not-allowed' : 'text-orange-600'} border-gray-300 rounded focus:ring-orange-500`}
                   />
                   <span className={`text-sm font-medium ${requiereAcompananteArea ? 'text-red-700' : 'text-gray-700'}`}>
-                    Viene con acompañante
+                    Viene con Escolta
                     {requiereAcompananteArea && ' (Obligatorio)'}
                   </span>
                 </label>
@@ -672,7 +672,7 @@ const AccesoCreate: React.FC = () => {
               {formData.tieneAcompanante && (
                 <div className="mt-4 space-y-4 p-4 bg-orange-100 rounded-lg border border-orange-200">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Acompañante *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Escolta *</label>
                     <input
                       type="text"
                       name="nombreAcompanante"
@@ -684,9 +684,9 @@ const AccesoCreate: React.FC = () => {
                     />
                   </div>
 
-                  {/* Selects del Organigrama para Acompañante */}
+                  {/* Selects del Organigrama para Escolta */}
                   <div className="space-y-4">
-                    <h4 className="text-md font-semibold text-gray-700">Dirección Administrativa del Acompañante *</h4>
+                    <h4 className="text-md font-semibold text-gray-700">Ubicacion a la que pertenece el Escolta *</h4>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Dirección */}
@@ -768,11 +768,11 @@ const AccesoCreate: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Vista previa de la dirección del acompañante */}
+                    {/* Vista previa de la dirección del Escolta */}
                     {organigramaAcompanante.getDireccionCompleta() && (
                       <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                         <p className="text-sm text-green-800">
-                          <strong>Dirección del acompañante:</strong><br />
+                          <strong>Ubicacion a la que pertenece el Escolta:</strong><br />
                           {organigramaAcompanante.getDireccionCompleta()}
                         </p>
                       </div>
@@ -818,13 +818,13 @@ const AccesoCreate: React.FC = () => {
                   </div>
                   {filtroOperativo ? (
                     <div className="flex justify-between">
-                      <span>Filtro asignado:</span>
+                      <span>Control de acceso asignado:</span>
                       <span className="font-semibold text-blue-600">{filtroOperativo.nombre}</span>
                     </div>
                   ) : (
                     <div className="flex justify-between">
-                      <span>Filtro asignado:</span>
-                      <span className="font-semibold text-yellow-600">Sin filtro asignado</span>
+                      <span>Control de acceso asignado:</span>
+                      <span className="font-semibold text-yellow-600">Sin control de acceso asignado</span>
                     </div>
                   )}
                 </div>
@@ -835,9 +835,9 @@ const AccesoCreate: React.FC = () => {
                   <div className="flex items-start">
                     <div className="text-red-600 mr-2 mt-0.5">⚠️</div>
                     <div className="text-sm text-red-800">
-                      <strong>Advertencia:</strong> Para registrar accesos debe tener un turno activo y un filtro asignado.
+                      <strong>Advertencia:</strong> Para registrar accesos debe tener un turno activo y un control de acceso asignado.
                       {!turnoOperativo && " No tiene un turno activo asignado."}
-                      {!filtroOperativo && " No tiene un filtro asignado."}
+                      {!filtroOperativo && " No tiene un control de acceso asignado."}
                     </div>
                   </div>
                 </div>

@@ -66,7 +66,7 @@ const TIASCreate: React.FC = () => {
     if (!formData.id.trim()) {
       await Swal.fire({
         title: 'Error',
-        text: 'El ID de la TIA es requerido',
+        text: 'El ID del Gafete es requerido',
         icon: 'error',
         confirmButtonText: 'Aceptar',
         customClass: { popup: 'alert' }
@@ -102,7 +102,7 @@ const TIASCreate: React.FC = () => {
       await api.post('/tias', formData);
       await Swal.fire({
         icon: "success",
-        text: "TIA creada exitosamente",
+        text: "Gafete de visita creado exitosamente",
         title: "Aviso",
         timer: 2000,
         timerProgressBar: true,
@@ -110,10 +110,10 @@ const TIASCreate: React.FC = () => {
       });
       navigate('/tias');
     } catch (error: any) {
-      console.error('Error creating TIAS:', error);
+      console.error('Error creating Gafete:', error);
       await Swal.fire({
         title: 'Error',
-        text: error.response?.data?.error || 'Error al crear el TIA',
+        text: error.response?.data?.error || 'Error al crear el gafete',
         icon: 'error',
         confirmButtonText: 'Aceptar',
         customClass: { popup: 'alert' }
@@ -148,20 +148,20 @@ const TIASCreate: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           {/* Header - Manteniendo el diseño original */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">🏷️ Crear Nueva TIA</h1>
+            <h1 className="text-3xl font-bold text-gray-900">🏷️ Crear Nuevo Gafete de visita</h1>
             <p className="text-gray-600 mt-2">Complete la información para crear una nueva Tarjeta de Identificación de Acceso Seguro</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Información del TIAS - Manteniendo colores y estructura */}
+            {/* Información del Gafete - Manteniendo colores y estructura */}
             <div className="bg-blue-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-blue-900 mb-4">Información de la TIA</h3>
+              <h3 className="text-lg font-semibold text-blue-900 mb-4">Información del Gafete</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Tipo */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tipo de TIA *
+                    Tipo de Gafete *
                   </label>
                   <select
                     value={formData.tipo}
@@ -170,14 +170,13 @@ const TIASCreate: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="GIA">GIA</option>
-                    <option value="SGN">SGN</option>
                   </select>
                 </div>
 
-                {/* Filtro Asignado */}
+                {/* Control de acceso Asignado */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Filtro Asignado
+                    Control de acceso Asignado
                   </label>
                   <select
                     value={formData.filtroId || ''}
@@ -193,10 +192,10 @@ const TIASCreate: React.FC = () => {
                   </select>
                 </div>
 
-                {/* ID del TIAS - Se expande a 2 columnas en desktop */}
+                {/* ID del Gafete - Se expande a 2 columnas en desktop */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ID de la TIA *
+                    ID del Gafete *
                   </label>
                   <div className="flex">
                     <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm font-medium">
@@ -242,7 +241,7 @@ const TIASCreate: React.FC = () => {
                 disabled={loading || !formData.id}
                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 order-1 sm:order-2"
               >
-                {loading ? 'Creando...' : 'Crear TIA'}
+                {loading ? 'Creando...' : 'Crear Gafete'}
               </button>
             </div>
           </form>

@@ -35,14 +35,14 @@ const LogsSistema: React.FC = () => {
   const [totalLogs, setTotalLogs] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(0);
 
-  // Cargar filtros activos
+  // Cargar Control de acceso activos
   useEffect(() => {
     const cargarFiltrosActivos = async () => {
       try {
         const filtros = await auditoriaService.getFiltrosActivos();
         setFiltrosActivos(filtros);
       } catch (error) {
-        console.error('Error cargando filtros:', error);
+        console.error('Error cargando Controles de acceso:', error);
       }
     };
     cargarFiltrosActivos();
@@ -289,19 +289,19 @@ const LogsSistema: React.FC = () => {
                 <option value="TURNO">Turnos</option>
                 <option value="IDENTIFICACION">Identificaciones</option>
                 <option value="REPORTE">Reportes</option>
-                <option value="FILTRO">Filtros</option>
+                <option value="FILTRO">Controles de acceso</option>
                 <option value="SISTEMA">Sistema</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Filtro</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Control de acceso</label>
               <select
                 value={filtros.filtroId}
                 onChange={(e) => handleFiltroChange('filtroId', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="todos">Todos los filtros</option>
+                <option value="todos">Todos los Controles de acceso</option>
                 {filtrosActivos.map(filtro => (
                   <option key={filtro.id} value={filtro.id.toString()}>
                     {filtro.nombre}
@@ -375,7 +375,7 @@ const LogsSistema: React.FC = () => {
                     Descripción
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                    Filtro
+                    Control de acceso
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Detalles

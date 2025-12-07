@@ -146,7 +146,7 @@ const SupervisorDashboard: React.FC = () => {
           >
             <div className="text-amber-200 text-sm font-semibold">ID Retenidas</div>
             <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mt-1 sm:mt-2">{stats.identificacionesRetenidas}</div>
-            <div className="text-red-400 text-xs mt-1 sm:mt-2">Todos los filtros</div>
+            <div className="text-red-400 text-xs mt-1 sm:mt-2">Todos los Controles de acceso</div>
           </div>
 
           <div
@@ -173,7 +173,7 @@ const SupervisorDashboard: React.FC = () => {
                 Consultar Registros
               </button>
               <p className="text-amber-200 text-sm text-center mt-2">
-                Consultar registros de este filtro y visualizar otros filtros (solo lectura)
+                Consultar registros de este Control de acceso y visualizar otros Controles de acceso (solo lectura)
               </p>
             </div>
           </div>
@@ -190,7 +190,7 @@ const SupervisorDashboard: React.FC = () => {
                 Generar Reportes Parciales
               </button>
               <p className="text-amber-200 text-sm text-center mt-2">
-                Reportes parciales específicos de esta zona o filtro
+                Reportes parciales específicos de esta zona o Control de acceso
               </p>
             </div>
           </div>
@@ -210,7 +210,7 @@ const SupervisorDashboard: React.FC = () => {
                 Ver Logs de Actividad
               </button>
               <p className="text-amber-200 text-sm text-center">
-                Visualizar logs de actividad relacionados con este filtro
+                Visualizar logs de actividad relacionados con este Control de acceso
               </p>
             </div>
           </div>
@@ -227,7 +227,7 @@ const SupervisorDashboard: React.FC = () => {
                 Identificaciones Retenidas
               </button>
               <p className="text-amber-200 text-sm text-center">
-                Visualizar identificaciones retenidas de todos los filtros
+                Visualizar identificaciones retenidas de todos los Control de acceso
               </p>
             </div>
           </div>

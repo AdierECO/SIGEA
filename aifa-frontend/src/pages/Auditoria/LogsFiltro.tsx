@@ -41,14 +41,14 @@ const LogsFiltro: React.FC = () => {
     return cumpleTipo && cumpleUsuario;
   });
 
-  // Cargar filtros activos
+  // Cargar Controles de acceso activos
   const cargarFiltrosActivos = async () => {
     try {
       setLoadingFiltros(true);
       const filtrosData = await auditoriaService.getFiltrosActivos();
       setFiltrosActivos(filtrosData);
     } catch (error: any) {
-      console.error('Error cargando filtros:', error);
+      console.error('Error cargando los Controles de acceso:', error);
     } finally {
       setLoadingFiltros(false);
     }
@@ -73,7 +73,7 @@ const LogsFiltro: React.FC = () => {
       setTotalPaginas(response.totalPages || 0);
     } catch (error: any) {
       console.error('Error cargando logs:', error);
-      setError(error.response?.data?.error || 'Error al cargar los accesos e identificaciones del filtro');
+      setError(error.response?.data?.error || 'Error al cargar los accesos e identificaciones del Control de acceso');
       setLogs([]);
       setTotalLogs(0);
       setTotalPaginas(0);
@@ -199,7 +199,7 @@ const LogsFiltro: React.FC = () => {
     }
   };
 
-  // Verificar si hay filtros activos
+  // Verificar si hay Controles de acceso activos
   const tieneFiltrosActivos = () => {
     return filtros.tipo !== 'todos' || 
            filtros.fechaInicio !== '' || 
@@ -254,7 +254,7 @@ const LogsFiltro: React.FC = () => {
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">📋 Accesos e Identificaciones por Filtro</h1>
+              <h1 className="text-3xl font-bold text-gray-900">📋 Accesos e Identificaciones por Control de acceso</h1>
               <p className="text-gray-600">
                 {filtros.tipo === 'todos' 
                   ? 'Registros de personas e identificaciones que pasaron por los filtros de seguridad' 
@@ -308,7 +308,7 @@ const LogsFiltro: React.FC = () => {
           {(filtros.tipo === 'todos' || filtros.tipo === 'FILTRO') && (
             <div className="bg-white rounded-lg p-4 shadow-sm border hover:shadow-md transition-shadow">
               <div className="text-2xl font-bold text-blue-600">{statsRealtime.filtros}</div>
-              <div className="text-sm text-gray-600">Filtros</div>
+              <div className="text-sm text-gray-600">Controles de acceso</div>
             </div>
           )}
         </div>
@@ -326,7 +326,7 @@ const LogsFiltro: React.FC = () => {
                 <option value="todos">Todos los tipos</option>
                 <option value="ACCESO">Accesos</option>
                 <option value="IDENTIFICACION">Identificaciones</option>
-                <option value="FILTRO">Filtros</option>
+                <option value="FILTRO">Control de acceso</option>
               </select>
             </div>
 
@@ -338,7 +338,7 @@ const LogsFiltro: React.FC = () => {
                 disabled={loadingFiltros}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
               >
-                <option value="todos">Todos los filtros</option>
+                <option value="todos">Control de acceso</option>
                 {filtrosActivos.map(filtro => (
                   <option key={filtro.id} value={filtro.id.toString()}>
                     {filtro.nombre}
@@ -413,7 +413,7 @@ const LogsFiltro: React.FC = () => {
                     Descripción
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                    Filtro
+                    Control de acceso
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Detalles

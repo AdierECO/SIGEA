@@ -32,7 +32,7 @@ const FiltroCreate: React.FC = () => {
       await api.post('/filtros', formData);
       Swal.fire({
         icon: "success",
-        text: "Filtro creado exitosamente",
+        text: "Control de acceso creado exitosamente",
         title: "Aviso",
         timer: 2000,
         timerProgressBar: true,
@@ -40,8 +40,8 @@ const FiltroCreate: React.FC = () => {
       });
       navigate('/filtros');
     } catch (error: any) {
-      console.error('Error creating filtro:', error);
-      alert(error.response?.data?.error || 'Error al crear el filtro');
+      console.error('Error creating Control de acceso:', error);
+      alert(error.response?.data?.error || 'Error al crear el Control de acceso');
     } finally {
       setLoading(false);
     }
@@ -72,8 +72,8 @@ const FiltroCreate: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">🎛️ Crear Nuevo Filtro</h1>
-            <p className="text-gray-600 mt-2">Complete la información para crear un nuevo filtro en el sistema</p>
+            <h1 className="text-3xl font-bold text-gray-900">🎛️ Crear Nuevo Control de acceso</h1>
+            <p className="text-gray-600 mt-2">Complete la información para crear un nuevo Control de acceso en el sistema</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -84,7 +84,7 @@ const FiltroCreate: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre del Filtro *
+                    Nombre del Control de acceso *
                   </label>
                   <input
                     type="text"
@@ -93,7 +93,7 @@ const FiltroCreate: React.FC = () => {
                     onChange={handleChange}
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ej: Filtro Principal, Filtro Zona A, etc."
+                    placeholder="Ej: Control de acceso Principal, Control de acceso Zona A, etc."
                   />
                 </div>
 
@@ -107,7 +107,7 @@ const FiltroCreate: React.FC = () => {
                     onChange={handleChange}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Descripción del propósito y función del filtro..."
+                    placeholder="Descripción del propósito y función del Control de acceso..."
                   />
                 </div>
 
@@ -152,7 +152,7 @@ const FiltroCreate: React.FC = () => {
                 disabled={loading}
                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
               >
-                {loading ? 'Creando...' : 'Crear Filtro'}
+                {loading ? 'Creando...' : 'Crear Control de acceso'}
               </button>
             </div>
           </form>

@@ -28,7 +28,7 @@ const AccesoList: React.FC = () => {
     }
   }, [usuario, navigate]);
 
-  // Establecer filtro por defecto según el filtro del operativo
+  // Establecer control de acceso por defecto según el control de acceso del operativo
   useEffect(() => {
     if (usuario?.rol === 'OPERATIVO' && usuario.filtroAsignadoId) {
       setFilterFiltro(usuario.filtroAsignadoId.toString());
@@ -126,7 +126,7 @@ const AccesoList: React.FC = () => {
     }
 
     if (usuario?.rol === 'OPERATIVO') {
-      // Solo puede editar si TIENE filtro asignado y es el mismo filtro del acceso
+      // Solo puede editar si TIENE control de acceso asignado y es el mismo control de acceso del acceso
       if (usuario.filtroAsignadoId && acceso.filtroId === usuario.filtroAsignadoId) {
         return true;
       }
@@ -147,7 +147,7 @@ const AccesoList: React.FC = () => {
     }
 
     if (usuario?.rol === 'OPERATIVO') {
-      // Solo puede registrar salida si TIENE filtro asignado y es el mismo filtro del acceso
+      // Solo puede registrar salida si TIENE control de acceso asignado y es el mismo control de acceso del acceso
       if (usuario.filtroAsignadoId && acceso.filtroId === usuario.filtroAsignadoId) {
         return true;
       }
@@ -158,14 +158,14 @@ const AccesoList: React.FC = () => {
 
   // Función para verificar si puede crear accesos
   const puedeCrearAccesos = () => {
-    // Solo OPERATIVOS CON FILTRO asignado pueden crear accesos
+    // Solo OPERATIVOS CON control de acceso asignado pueden crear accesos
     if (usuario?.rol === 'OPERATIVO' && usuario.filtroAsignadoId) {
       return true;
     }
     return false;
   };
 
-  // Filtros
+  // Controles de acceso
   const filteredAccesos = accesos.filter(acceso => {
     if (!acceso) return false;
 
@@ -173,7 +173,7 @@ const AccesoList: React.FC = () => {
       filterEstado === 'activos' ? !acceso.horaSalida :
         acceso.horaSalida;
 
-    // Filtro por filtro
+    // Control de acceso por control de acceso
     const matchesFilterFiltro = filterFiltro === 'todos' ? true :
       filterFiltro === 'sin-filtro' ? !acceso.filtroId :
         acceso.filtroId === parseInt(filterFiltro);
@@ -217,13 +217,13 @@ const AccesoList: React.FC = () => {
 
   const getAcompananteBadge = (acceso: Acceso) => {
     if (!acceso.tieneAcompanante) {
-      return <span className="text-xs text-gray-500">Sin acompañante</span>;
+      return <span className="text-xs text-gray-500">Sin escolta</span>;
     }
 
     return (
       <div className="flex flex-col space-y-1 min-w-0">
         <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold">
-          👥 CON ACOMPAÑANTE
+          👥 CON ESCOLTA
         </span>
         {acceso.nombreAcompanante && (
           <span className="text-xs text-gray-500 truncate">
@@ -236,7 +236,7 @@ const AccesoList: React.FC = () => {
 
   const getFiltroBadge = (filtro: any) => {
     if (!filtro) {
-      return <span className="text-xs text-gray-500">Sin filtro</span>;
+      return <span className="text-xs text-gray-500">Sin control de acceso</span>;
     }
 
     return (
@@ -341,7 +341,7 @@ const AccesoList: React.FC = () => {
                 </span>
               </div>
             </div>
-            {/* Solo OPERATIVOS CON FILTRO pueden crear accesos */}
+            {/* Solo OPERATIVOS CON control de acceso pueden crear accesos */}
             {puedeCrearAccesos() && (
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
@@ -367,7 +367,7 @@ const AccesoList: React.FC = () => {
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Buscar por nombre, apellidos, empresa, área, filtro, TIA, nombre del acompañante, número de identificación o registrado por..."
+                placeholder="Buscar por nombre, apellidos, empresa, área, control de acceso, TIA, nombre del escolta, número de identificación o registrado por..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
@@ -383,14 +383,14 @@ const AccesoList: React.FC = () => {
               <option value="finalizados">Accesos finalizados</option>
             </select>
 
-            {/* Filtro por filtro - todos pueden usar */}
+            {/* control de acceso por control de acceso - todos pueden usar */}
             <select
               value={filterFiltro}
               onChange={(e) => setFilterFiltro(e.target.value)}
               className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
             >
-              <option value="todos">Todos los filtros</option>
-              <option value="sin-filtro">Sin filtro</option>
+              <option value="todos">Todos los controles de acceso</option>
+              <option value="sin-filtro">Sin control de acceso</option>
               {filtrosDisponibles.map(filtro => (
                 <option key={filtro.id} value={filtro.id}>
                   {filtro.nombre}
@@ -412,7 +412,7 @@ const AccesoList: React.FC = () => {
           </div>
           <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
             <div className="text-xl sm:text-2xl font-bold text-orange-600">{estadisticas.conAcompanante}</div>
-            <div className="text-xs sm:text-sm text-gray-600">Con Acompañante</div>
+            <div className="text-xs sm:text-sm text-gray-600">Con Escolta</div>
           </div>
           <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
             <div className="text-xl sm:text-2xl font-bold text-indigo-600">{estadisticas.conGrupo}</div>
@@ -420,7 +420,7 @@ const AccesoList: React.FC = () => {
           </div>
           <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
             <div className="text-xl sm:text-2xl font-bold text-purple-600">{estadisticas.conFiltro}</div>
-            <div className="text-xs sm:text-sm text-gray-600">Con Filtro</div>
+            <div className="text-xs sm:text-sm text-gray-600">Con control de acceso</div>
           </div>
           <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
             <div className="text-xl sm:text-2xl font-bold text-gray-600">{estadisticas.finalizados}</div>
@@ -436,11 +436,11 @@ const AccesoList: React.FC = () => {
                 <tr>
                   <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Persona</th>
                   <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-64">Información</th>
-                  <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Acompañante</th>
+                  <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Escolta</th>
                   <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Grupo</th>
                   <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Identificación</th>
-                  <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Filtro</th>
-                  <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">TIA</th>
+                  <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Control de acceso</th>
+                  <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Gafete</th>
                   <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-56">Horario</th>
                   <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Estado</th>
                   <th className="px-3 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-50">Acciones</th>
@@ -484,7 +484,7 @@ const AccesoList: React.FC = () => {
                       })()}</div>
                     </td>
 
-                    {/* Acompañante */}
+                    {/* Escolta */}
                     <td className="px-3 sm:px-4 py-2">
                       {getAcompananteBadge(acceso)}
                     </td>
@@ -499,7 +499,7 @@ const AccesoList: React.FC = () => {
                       {acceso.identificacion ? getIdentificacionBadge(acceso.identificacion) : 'Sin identificación'}
                     </td>
 
-                    {/* Filtro */}
+                    {/* control de acceso */}
                     <td className="px-3 sm:px-4 py-2">
                       {getFiltroBadge(acceso.filtro)}
                     </td>

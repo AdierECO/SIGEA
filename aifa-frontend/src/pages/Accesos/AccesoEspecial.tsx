@@ -28,7 +28,7 @@ const AccesoEspecial: React.FC = () => {
   const [cargandoTIAS, setCargandoTIAS] = useState(false);
   const [, setRequiereAcompananteArea] = useState(true); // Por defecto true para acceso especial
 
-  // Hooks del organigrama para Área de Visita y Acompañante
+  // Hooks del organigrama para Área de Visita y Escolta
   const organigramaAreaVisita = useOrganigrama();
   const organigramaAcompanante = useOrganigrama();
 
@@ -72,7 +72,7 @@ const AccesoEspecial: React.FC = () => {
     }
   }, [usuario?.id]);
 
-  // Cargar TIAS disponibles cuando cambie el filtro
+  // Cargar Gafetes de visitante disponibles cuando cambie el control de acceso
   useEffect(() => {
     if (filtroOperativo?.id) {
       cargarTIASDisponibles();
@@ -82,7 +82,7 @@ const AccesoEspecial: React.FC = () => {
     }
   }, [filtroOperativo?.id]);
 
-  // Verificar requerimiento de acompañante cuando cambia el área de visita
+  // Verificar requerimiento de escolta cuando cambia el área de visita
   useEffect(() => {
     const direccion = organigramaAreaVisita.direccionSeleccionada;
     const subdireccion = organigramaAreaVisita.subdireccionSeleccionada;
@@ -150,7 +150,7 @@ const AccesoEspecial: React.FC = () => {
       setTiasDisponibles(tias);
 
     } catch (error) {
-      console.error('❌ Error cargando TIAS disponibles:', error);
+      console.error('❌ Error cargando Gafetes de visitante disponibles:', error);
       setTiasDisponibles([]);
     } finally {
       setCargandoTIAS(false);
@@ -173,14 +173,14 @@ const AccesoEspecial: React.FC = () => {
 
     // Validaciones
     if (!formData.nombreAcompanante?.trim()) {
-      showAlert('Error', 'Nombre del acompañante es requerido', 'error');
+      showAlert('Error', 'Nombre del escolta es requerido', 'error');
       return;
     }
 
-    // Validación de dirección administrativa del acompañante
+    // Validación de dirección administrativa del escolta
     const direccionAcompananteCompleta = organigramaAcompanante.getDireccionCompleta();
     if (!direccionAcompananteCompleta) {
-      showAlert('Error', 'Debe seleccionar al menos una dirección administrativa para el acompañante', 'error');
+      showAlert('Error', 'Debe seleccionar al menos una dirección administrativa para el escolta', 'error');
       return;
     }
 
@@ -338,7 +338,7 @@ const AccesoEspecial: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900">🎪 Acceso Especial</h1>
-            <p className="text-gray-600">Registro para visitas especiales - Solo información del acompañante obligatoria</p>
+            <p className="text-gray-600">Registro para visitas especiales - Solo información del escolta obligatoria</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -361,7 +361,7 @@ const AccesoEspecial: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    TIAS
+                    GAFETES DE VISITANTE
                     {cargandoTIAS && (
                       <span className="ml-2 text-blue-600 text-sm font-normal">
                         (Cargando...)
@@ -375,7 +375,7 @@ const AccesoEspecial: React.FC = () => {
                     disabled={cargandoTIAS || tiasDisponibles.length === 0}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                   >
-                    <option value="">Seleccione una TIA</option>
+                    <option value="">Seleccione un Gafete de visitante</option>
                     {tiasDisponibles.map((tias) => (
                       <option key={tias.id} value={tias.id}>
                         {tias.id}
@@ -386,11 +386,11 @@ const AccesoEspecial: React.FC = () => {
                     {filtroOperativo ? (
                       <>
                         {tiasDisponibles.length === 0 && !cargandoTIAS && (
-                          <span className="text-red-600">No hay TIAS disponibles</span>
+                          <span className="text-red-600">No hay Gafetes disponibles</span>
                         )}
                       </>
                     ) : (
-                      <span className="text-red-600">No tiene un filtro asignado</span>
+                      <span className="text-red-600">No tiene un control de acceso asignado</span>
                     )}
                   </div>
                 </div>
@@ -541,13 +541,13 @@ const AccesoEspecial: React.FC = () => {
               )}
             </div>
 
-            {/* Acompañante Obligatorio con Organigrama */}
+            {/* Escolta Obligatorio con Organigrama */}
             <div className="bg-orange-50 p-4 rounded-lg">
-              <h3 className="text-lg font-semibold text-orange-900 mb-4">👥 Acompañante (Obligatorio) *</h3>
+              <h3 className="text-lg font-semibold text-orange-900 mb-4">👥 Escolta (Obligatorio) *</h3>
 
               <div className="mt-4 space-y-4 p-4 bg-orange-100 rounded-lg">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Acompañante *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Escolta *</label>
                   <input
                     type="text"
                     name="nombreAcompanante"
@@ -559,9 +559,9 @@ const AccesoEspecial: React.FC = () => {
                   />
                 </div>
 
-                {/* Selects del Organigrama para Acompañante */}
+                {/* Selects del Organigrama para Escolta */}
                 <div className="space-y-4">
-                  <h4 className="text-md font-semibold text-gray-700">Dirección Administrativa del Acompañante *</h4>
+                  <h4 className="text-md font-semibold text-gray-700">Ubicacion a la que pertenece el Escolta *</h4>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Dirección */}
@@ -643,11 +643,11 @@ const AccesoEspecial: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Vista previa de la dirección del acompañante */}
+                  {/* Vista previa de la dirección del escolta */}
                   {organigramaAcompanante.getDireccionCompleta() && (
                     <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                       <p className="text-sm text-green-800">
-                        <strong>Dirección del acompañante:</strong><br />
+                        <strong>Ubicacion a la que pertenece el escolta:</strong><br />
                         {organigramaAcompanante.getDireccionCompleta()}
                       </p>
                     </div>
@@ -727,13 +727,13 @@ const AccesoEspecial: React.FC = () => {
                   </div>
                   {filtroOperativo ? (
                     <div className="flex justify-between">
-                      <span>Filtro asignado:</span>
+                      <span>control de acceso asignado:</span>
                       <span className="font-semibold text-blue-600">{filtroOperativo.nombre}</span>
                     </div>
                   ) : (
                     <div className="flex justify-between">
-                      <span>Filtro asignado:</span>
-                      <span className="font-semibold text-yellow-600">Sin filtro asignado</span>
+                      <span>control de acceso asignado:</span>
+                      <span className="font-semibold text-yellow-600">Sin control de acceso asignado</span>
                     </div>
                   )}
                 </div>
@@ -744,9 +744,9 @@ const AccesoEspecial: React.FC = () => {
                   <div className="flex items-start">
                     <div className="text-red-600 mr-2 mt-0.5">⚠️</div>
                     <div className="text-sm text-red-800">
-                      <strong>Advertencia:</strong> Para registrar accesos debe tener un turno activo y un filtro asignado.
+                      <strong>Advertencia:</strong> Para registrar accesos debe tener un turno activo y un control de acceso asignado.
                       {!turnoOperativo && " No tiene un turno activo asignado."}
-                      {!filtroOperativo && " No tiene un filtro asignado."}
+                      {!filtroOperativo && " No tiene un control de acceso asignado."}
                     </div>
                   </div>
                 </div>

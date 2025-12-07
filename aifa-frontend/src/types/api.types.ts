@@ -29,7 +29,7 @@ export interface AccesoFormData {
   motivo: string;
   area: string;
   
-  // Acompañante
+  // Escolta
   tieneAcompanante: boolean;
   nombreAcompanante?: string;
   apellidosAcompanante?: string;

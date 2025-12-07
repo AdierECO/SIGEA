@@ -258,7 +258,7 @@ const ReportePersonas: React.FC = () => {
         tipoReporte: 'usuarios-operativos'
       };
 
-      // CRÍTICO: Usar registradoPor para el filtro
+      // Usar registradoPor para el Control de acceso
       if (usuarioSeleccionadoRegistradoPor !== 'todos') {
         exportData.registradoPor = usuarioSeleccionadoRegistradoPor;
         console.log(`📤 Exportando por registrador: ${usuarioSeleccionadoRegistradoPor}`);
@@ -370,7 +370,7 @@ const ReportePersonas: React.FC = () => {
                   to="/reportes/filtros"
                   className="px-4 py-2 rounded-lg text-sm font-semibold bg-white text-blue-600 border border-blue-600 hover:bg-blue-50"
                 >
-                  🚪 Vista por Filtros
+                  🚪 Vista por Control de acceso
                 </Link>
                 <button className="px-4 py-2 rounded-lg text-sm font-semibold bg-blue-500 text-white">
                   👥 Vista por personal
@@ -415,14 +415,14 @@ const ReportePersonas: React.FC = () => {
 
         {/* Filtro por Usuario */}
         <div className="bg-white rounded-lg p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">👤 Seleccionar Registrador</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">👤 Seleccionar Operativo</h3>
           <div className="max-w-md">
             <select
               value={usuarioSeleccionado === 'todos' ? 'todos' : `${usuarioSeleccionado}|${usuarioSeleccionadoRegistradoPor}`}
               onChange={handleUsuarioChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="todos">👥 Todos los registradores</option>
+              <option value="todos">👥 Todos los operativos</option>
               {usuariosOperativos.map(usuario => (
                 <option key={usuario.id} value={`${usuario.id}|${usuario.registradoPor}`}>
                   {usuario.registradoPor} - {usuario.totalAccesosRegistrados} accesos
@@ -431,7 +431,7 @@ const ReportePersonas: React.FC = () => {
             </select>
             <p className="text-sm text-gray-600 mt-2">
               {usuarioSeleccionadoRegistradoPor === 'todos' 
-                ? 'Mostrando todos los registradores' 
+                ? 'Mostrando todos los operativos' 
                 : `Filtrando por: ${usuarioSeleccionadoRegistradoPor}`}
             </p>
           </div>
@@ -444,7 +444,7 @@ const ReportePersonas: React.FC = () => {
               {usuarioSeleccionadoRegistradoPor === 'todos' ? totalUsuarios : usuariosFiltrados.length}
             </div>
             <div className="text-sm text-gray-600">
-              {usuarioSeleccionadoRegistradoPor === 'todos' ? 'Registradores' : 'Registrador Seleccionado'}
+              {usuarioSeleccionadoRegistradoPor === 'todos' ? 'Operativo' : 'Operativo Seleccionado'}
             </div>
           </div>
           <div className="bg-white rounded-lg p-4">
@@ -504,7 +504,7 @@ const ReportePersonas: React.FC = () => {
                 No hay datos disponibles
               </h4>
               <p className="text-gray-600">
-                No se encontraron registradores con los filtros aplicados
+                No se encontraron operativos con los filtros aplicados
               </p>
             </div>
           ) : (

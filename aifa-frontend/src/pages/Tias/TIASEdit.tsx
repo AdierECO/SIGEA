@@ -5,7 +5,7 @@ import { api } from '../../services/api';
 import type { UpdateTIASDto, TIASWithRelations, FiltroOption } from '../../types';
 import Swal from 'sweetalert2';
 
-// Interface para la respuesta de TIAS disponibles
+// Interface para la respuesta de Gafetes disponibles
 interface TIASDisponible {
   id: string;
   tipo: string;
@@ -71,7 +71,7 @@ const TIASEdit: React.FC = () => {
       const response = await api.get('/filtros/activos');
       setFiltros(response.data);
     } catch (error) {
-      console.error('Error fetching filtros:', error);
+      console.error('Error fetching Controlws de acceso:', error);
     }
   };
 
@@ -110,7 +110,7 @@ const TIASEdit: React.FC = () => {
     if (!formData.tipo?.trim()) {
       await Swal.fire({
         title: 'Error',
-        text: 'El tipo de TIAS es requerido',
+        text: 'El tipo de Gafete es requerido',
         icon: 'error',
         confirmButtonText: 'Aceptar',
         customClass: { popup: 'alert' }
@@ -134,7 +134,7 @@ const TIASEdit: React.FC = () => {
       await api.put(`/tias/${id}`, formData);
       await Swal.fire({
         icon: "success",
-        text: "TIAS actualizado exitosamente",
+        text: "Gafete de visita actualizado exitosamente",
         title: "Aviso",
         timer: 2000,
         timerProgressBar: true,
@@ -142,10 +142,10 @@ const TIASEdit: React.FC = () => {
       });
       navigate('/tias');
     } catch (error: any) {
-      console.error('Error updating TIAS:', error);
+      console.error('Error updating Gafete:', error);
       await Swal.fire({
         title: 'Error',
-        text: error.response?.data?.error || 'Error al actualizar TIAS',
+        text: error.response?.data?.error || 'Error al actualizar Gafete',
         icon: 'error',
         confirmButtonText: 'Aceptar',
         customClass: { popup: 'alert' }
@@ -176,13 +176,13 @@ const TIASEdit: React.FC = () => {
 
   const handleRemoveFiltro = async () => {
     const result = await Swal.fire({
-      title: '¿Quitar filtro asignado?',
-      text: `"${tias?.id}" dejará de estar asociado al filtro "${tias?.filtro?.nombre}"`,
+      title: '¿Quitar Control de acceso asignado?',
+      text: `"${tias?.id}" dejará de estar asociado al Control de acceso "${tias?.filtro?.nombre}"`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#f59e0b',
       cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Sí, quitar filtro',
+      confirmButtonText: 'Sí, quitar Control de acceso',
       cancelButtonText: 'Cancelar',
       customClass: { popup: 'alert' }
     });
@@ -194,8 +194,8 @@ const TIASEdit: React.FC = () => {
       }));
 
       await Swal.fire({
-        title: 'Filtro removido',
-        text: 'El filtro ha sido quitado del formulario. Recuerde guardar los cambios.',
+        title: 'Control de acceso removido',
+        text: 'El Control de acceso ha sido quitado del formulario. Recuerde guardar los cambios.',
         icon: 'info',
         timer: 2000,
         timerProgressBar: true,
@@ -210,7 +210,7 @@ const TIASEdit: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Cargando TIAS...</div>
+        <div className="text-lg">Cargando gafetes...</div>
       </div>
     );
   }
@@ -218,7 +218,7 @@ const TIASEdit: React.FC = () => {
   if (!tias) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">TIAS no encontrado</div>
+        <div className="text-lg">Gafete no encontrado</div>
       </div>
     );
   }
@@ -229,20 +229,20 @@ const TIASEdit: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">🏷️ Editar TIAS</h1>
-            <p className="text-gray-600 mt-2">Modifique la información de TIAS "{tias.id}"</p>
+            <h1 className="text-3xl font-bold text-gray-900">🏷️ Editar Gafete de visita</h1>
+            <p className="text-gray-600 mt-2">Modifique la información del Gafete "{tias.id}"</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Información del TIAS */}
+            {/* Información del Gafete */}
             <div className="bg-blue-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-blue-900 mb-4">Información de TIAS</h3>
+              <h3 className="text-lg font-semibold text-blue-900 mb-4">Información del Gafete</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* ID (solo lectura) */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ID de TIAS
+                    ID del Gafete
                   </label>
                   <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
                     {tias.id}
@@ -252,7 +252,7 @@ const TIASEdit: React.FC = () => {
                 {/* Tipo */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tipo de TIAS *
+                    Tipo de Gafete *
                   </label>
                   <select
                     value={formData.tipo || ''}
@@ -261,7 +261,6 @@ const TIASEdit: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="GIA">GIA</option>
-                    <option value="SGN">SGN</option>
                   </select>
                 </div>
 
@@ -294,10 +293,10 @@ const TIASEdit: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Filtro Asignado */}
+                {/* Control de acceso Asignado */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Filtro Asignado
+                    Control de acceso Asignado
                   </label>
                   <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                     <select
@@ -313,24 +312,24 @@ const TIASEdit: React.FC = () => {
                       ))}
                     </select>
 
-                    {/* Botón para quitar filtro - solo muestra si hay un filtro actual */}
+                    {/* Botón para quitar Control de acceso - solo muestra si hay un Control de acceso actual */}
                     {tias.filtroId && (
                       <button
                         type="button"
                         onClick={handleRemoveFiltro}
                         className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 whitespace-nowrap text-sm sm:text-base"
                       >
-                        Quitar Filtro
+                        Quitar Control de acceso
                       </button>
                     )}
                   </div>
 
                   <p className="text-xs text-gray-500 mt-2">
                     {formData.filtroId === null
-                      ? 'El filtro será removido al guardar los cambios'
+                      ? 'El Control de acceso será removido al guardar los cambios'
                       : formData.filtroId && formData.filtroId !== tias.filtroId
                         ? 'Se asignará un nuevo filtro al guardar los cambios'
-                        : 'Seleccione "Sin filtro asignado" para remover el filtro actual'
+                        : 'Seleccione "Sin Control de acceso asignado" para remover el Control de acceso actual'
                     }
                   </p>
                 </div>
@@ -345,7 +344,7 @@ const TIASEdit: React.FC = () => {
                 <div><strong>Accesos asociados:</strong> {tias._count?.accesos || 0}</div>
                 <div><strong>Fecha de creación:</strong> {new Date(tias.fechaCreacion).toLocaleDateString()}</div>
                 <div><strong>Última actualización:</strong> {new Date(tias.fechaActualizacion).toLocaleDateString()}</div>
-                <div><strong>Filtro actual:</strong> {tias.filtro ? tias.filtro.nombre : 'Ninguno'}</div>
+                <div><strong>Control de acceso actual:</strong> {tias.filtro ? tias.filtro.nombre : 'Ninguno'}</div>
                 <div><strong>Disponibilidad:</strong>
                   <span className={`ml-1 px-2 py-1 text-xs font-semibold rounded-full ${estaDisponible
                       ? 'bg-green-100 text-green-800'
@@ -365,7 +364,7 @@ const TIASEdit: React.FC = () => {
                   <li>• <strong>Tipo:</strong> {tias.tipo} → {formData.tipo}</li>
                 )}
                 {formData.filtroId === null && tias.filtroId && (
-                  <li>• <strong>Filtro:</strong> Se removerá el filtro "{tias.filtro?.nombre}"</li>
+                  <li>• <strong>Filtro:</strong> Se removerá el Control de acceso "{tias.filtro?.nombre}"</li>
                 )}
                 {formData.filtroId && formData.filtroId !== tias.filtroId && (
                   <li>• <strong>Filtro:</strong> {tias.filtro?.nombre || 'Ninguno'} → {filtros.find(f => f.id === formData.filtroId)?.nombre}</li>

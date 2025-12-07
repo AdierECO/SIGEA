@@ -29,7 +29,7 @@ const OperativoDashboard: React.FC = () => {
     }
   }, [usuario, navigate]);
 
-  // Determinar si el operativo tiene filtro asignado
+  // Determinar si el operativo tiene Control de acceso asignado
   const tieneFiltroAsignado = usuario?.filtroAsignadoId !== null && usuario?.filtroAsignadoId !== undefined;
 
   useEffect(() => {
@@ -52,7 +52,7 @@ const OperativoDashboard: React.FC = () => {
 
       const usuarioData = usuarioRes.data;
 
-      // Filtrar accesos según si tiene filtro
+      // Filtrar accesos según si tiene Control de acceso
       let misAccesos = [];
       if (tieneFiltroAsignado) {
         // Si tiene filtro, solo ve los accesos de su filtro
@@ -60,11 +60,11 @@ const OperativoDashboard: React.FC = () => {
           acceso && acceso.filtroId === usuario?.filtroAsignadoId
         );
       } else {
-        // Si no tiene filtro, ve todos los accesos (solo lectura)
+        // Si no tiene Control de acceso, ve todos los accesos (solo lectura)
         misAccesos = accesosData;
       }
 
-      // Pendientes de salida (solo los que puede ver según su filtro)
+      // Pendientes de salida (solo los que puede ver según su Control de acceso)
       const pendientesSalida = misAccesos.filter((a: any) => a && !a.horaSalida).length;
 
       const identificacionesRetenidas = accesosData.filter((acceso: any) =>
@@ -222,7 +222,7 @@ const OperativoDashboard: React.FC = () => {
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/20">
             <h3 className="text-white font-semibold mb-4 text-lg">🚪 Control de Accesos</h3>
             <div className="space-y-3 sm:space-y-4">
-              {/* SOLO OPERATIVOS CON FILTRO pueden registrar accesos */}
+              {/* SOLO OPERATIVOS CON Control de acceso pueden registrar accesos */}
               {tieneFiltroAsignado ? (
                 <>
                   <button
@@ -244,31 +244,31 @@ const OperativoDashboard: React.FC = () => {
                     className="w-full bg-green-500 hover:bg-green-600 text-white py-3 sm:py-4 px-4 rounded-lg transition duration-200 flex items-center justify-center text-base sm:text-lg"
                   >
                     <span className="mr-3">👁️</span>
-                    Ver Registros del Filtro
+                    Ver Registros del Control de acceso
                   </button>
                   <p className="text-cyan-200 text-sm text-center mt-2">
-                    Registrar accesos y salidas de personas sin TIA y sus escoltas
+                    Registrar accesos y salidas de visitantes
                   </p>
                 </>
               ) : (
-                // OPERATIVOS SIN FILTRO solo pueden ver registros
+                // OPERATIVOS SIN Control de acceso solo pueden ver registros
                 <>
                   <button
                     onClick={navigateToAccesos}
                     className="w-full bg-green-500 hover:bg-green-600 text-white py-3 sm:py-4 px-4 rounded-lg transition duration-200 flex items-center justify-center text-base sm:text-lg"
                   >
                     <span className="mr-3">👁️</span>
-                    Ver Registros del Filtro
+                    Ver Registros del Control de acceso
                   </button>
                   <p className="text-yellow-200 text-sm text-center mt-2">
-                    Modo solo lectura - Sin filtro asignado para registrar accesos
+                    Modo solo lectura - Sin Control de acceso asignado para registrar accesos
                   </p>
                 </>
               )}
             </div>
           </div>
 
-          {/* GESTIÓN DE TURNOS Y DATOS - SOLO CON FILTRO */}
+          {/* GESTIÓN DE TURNOS Y DATOS - SOLO CON Control de acceso */}
           {tieneFiltroAsignado && (
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/20">
               <h3 className="text-white font-semibold mb-4 text-lg">🔄 Gestión Operativa</h3>

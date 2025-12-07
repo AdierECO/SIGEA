@@ -65,7 +65,7 @@ const FiltroEdit: React.FC = () => {
     e.preventDefault();
 
     if (!formData.nombre?.trim()) {
-      alert('El nombre del filtro es requerido');
+      alert('El nombre del Control de acceso es requerido');
       return;
     }
 
@@ -74,7 +74,7 @@ const FiltroEdit: React.FC = () => {
       await api.put(`/filtros/${id}`, formData);
       Swal.fire({
         icon: "success",
-        text: "Filtro editado exitosamente",
+        text: "Control de acceso editado exitosamente",
         title: "Aviso",
         timer: 2000,
         timerProgressBar: true,
@@ -82,10 +82,10 @@ const FiltroEdit: React.FC = () => {
       });
       navigate('/filtros');
     } catch (error: any) {
-      console.error('Error updating filtro:', error);
+      console.error('Error updating Control de acceso:', error);
       await Swal.fire({
         title: 'Error',
-        text: error.response?.data?.error || 'Error al actualizar el filtro',
+        text: error.response?.data?.error || 'Error al actualizar el Control de acceso',
         icon: 'error',
         confirmButtonText: 'Aceptar',
         confirmButtonColor: '#ef4444',
@@ -118,7 +118,7 @@ const FiltroEdit: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Cargando filtro...</div>
+        <div className="text-lg">Cargando Control de acceso...</div>
       </div>
     );
   }
@@ -126,7 +126,7 @@ const FiltroEdit: React.FC = () => {
   if (!filtro) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Filtro no encontrado</div>
+        <div className="text-lg">Control de acceso no encontrado</div>
       </div>
     );
   }
@@ -137,8 +137,8 @@ const FiltroEdit: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">🎛️ Editar Filtro</h1>
-            <p className="text-gray-600 mt-2">Modifique la información del filtro "{filtro.nombre}"</p>
+            <h1 className="text-3xl font-bold text-gray-900">🎛️ Editar Control de acceso</h1>
+            <p className="text-gray-600 mt-2">Modifique la información del Control de acceso "{filtro.nombre}"</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -149,7 +149,7 @@ const FiltroEdit: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre del Filtro *
+                    Nombre del Control de acceso *
                   </label>
                   <input
                     type="text"

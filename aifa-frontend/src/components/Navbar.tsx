@@ -110,7 +110,7 @@ const Navbar: React.FC = () => {
       '/reportes/personas': 'Reportes por Persona',
 
       '/sistema': 'Logs del Sistema',
-      '/filtro': 'Auditoría de Filtro',
+      '/filtro': 'Auditoría de Control de acceso',
       '/exportar': 'Exportar Datos',
       '/importar': 'Importar Datos',
       '/consolidacion': 'Consolidación'

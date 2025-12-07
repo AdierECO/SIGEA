@@ -115,13 +115,13 @@ const AuditoriaView: React.FC = () => {
               )}
               {detalle.detalles.filtro && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Filtro:</span>
+                  <span className="text-gray-600">Control de acceso:</span>
                   <span className="font-medium">{detalle.detalles.filtro}</span>
                 </div>
               )}
               {detalle.detalles.filtroId && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">ID Filtro:</span>
+                  <span className="text-gray-600">ID Control de acceso:</span>
                   <span className="font-mono font-medium">#{detalle.detalles.filtroId}</span>
                 </div>
               )}
@@ -142,7 +142,7 @@ const AuditoriaView: React.FC = () => {
               )}
               {detalle.detalles.filtro && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Filtro Asignado:</span>
+                  <span className="text-gray-600">Control de acceso Asignado:</span>
                   <span className="font-medium">{detalle.detalles.filtro}</span>
                 </div>
               )}
@@ -163,7 +163,7 @@ const AuditoriaView: React.FC = () => {
               )}
               {detalle.detalles.filtro && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Filtro Asociado:</span>
+                  <span className="text-gray-600">Control de acceso Asociado:</span>
                   <span className="font-medium">{detalle.detalles.filtro}</span>
                 </div>
               )}
@@ -180,7 +180,7 @@ const AuditoriaView: React.FC = () => {
       case 'FILTRO':
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">🔍 Detalles del Filtro</h3>
+            <h3 className="text-lg font-semibold text-gray-900">🔍 Detalles del Control de acceso</h3>
             <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
               {detalle.detalles.filtro && (
                 <div className="flex justify-between">

@@ -1,6 +1,5 @@
 export type TipoRequerimientoAcompanante = "opcional" | "requerido";
 
-// Tipo para un elemento del organigrama
 export interface ElementoOrganigrama {
   nombre: string;
   codigo: string;
@@ -21,7 +20,6 @@ export interface Gerencia {
   requiereAcompanante: TipoRequerimientoAcompanante;
 }
 
-// Aquí especificamos que el array es de tipo ElementoOrganigrama[]
 export const organigrama: ElementoOrganigrama[] = [
   {
     nombre: "Dirección General",
@@ -55,7 +53,7 @@ export const organigrama: ElementoOrganigrama[] = [
   {
     nombre: "Dirección del Órgano Interno de Control",
     codigo: "K11",
-    requiereAcompanante: "opcional", // Caso especial 1
+    requiereAcompanante: "opcional",
     subdirecciones: [
       {
         nombre: "Titular del Área de Responsabilidades",
@@ -82,7 +80,7 @@ export const organigrama: ElementoOrganigrama[] = [
   {
     nombre: "Agencia Federal de Aviación Civil (AFAC)",
     codigo: "K11",
-    requiereAcompanante: "opcional", // Caso especial 2
+    requiereAcompanante: "opcional",
     subdirecciones: [
     ]
   },
@@ -213,12 +211,6 @@ export const organigrama: ElementoOrganigrama[] = [
           { nombre: "Gerencia de Movilidad Terrestre", codigo: "N32", requiereAcompanante: "requerido" },
           { nombre: "Gerencia de Calidad", codigo: "N32", requiereAcompanante: "requerido" }
         ]
-      },
-      {
-        nombre: "Caja de Cobro",
-        codigo: "M33",
-        requiereAcompanante: "opcional", // Caso especial 3
-        gerencias: []
       }
     ]
   },
@@ -302,5 +294,41 @@ export const organigrama: ElementoOrganigrama[] = [
         ]
       }
     ]
+  },
+  {
+    nombre: "Aduanas",
+    codigo: "K11",
+    requiereAcompanante: "opcional",
+    subdirecciones: [
+    ]
+  },
+  {
+    nombre: "Migración",
+    codigo: "K11",
+    requiereAcompanante: "opcional",
+    subdirecciones: [
+    ]
+  },
+  {
+    nombre: "Sala de consejo",
+    codigo: "K11",
+    requiereAcompanante: "requerido",
+    subdirecciones: [
+    ]
+  },
+  {
+    nombre: "Caja de Cobro",
+    codigo: "K11",
+    requiereAcompanante: "opcional",
+    subdirecciones: [
+    ]
+  },
+  {
+    nombre: "Proveedor",
+    codigo: "K11",
+    requiereAcompanante: "opcional",
+    subdirecciones: [
+    ]
   }
+  
 ];

@@ -57,7 +57,7 @@ const ReporteFiltros: React.FC = () => {
       let filtrosData: Filtro[] = [];
 
       try {
-        // PRIMERO: Intentar con endpoint de filtros activos
+        // PRIMERO: Intentar con endpoint de Control de acceso activos
         response = await api.get('/filtros/activos');
         filtrosData = response.data.filtros || response.data || [];
       } catch (error) {
@@ -67,7 +67,7 @@ const ReporteFiltros: React.FC = () => {
         filtrosData = response.data.filtros || response.data || [];
       }
 
-      // Asegurarnos de que todos los filtros tengan el campo estaActivo
+      // Asegurarnos de que todos los Control de acceso tengan el campo estaActivo
       const filtrosConEstado = filtrosData.map((filtro: Filtro) => ({
         ...filtro,
         // Si no viene el campo estaActivo, asumimos que está activo (true)
@@ -102,10 +102,10 @@ const ReporteFiltros: React.FC = () => {
           return;
         }
       } catch (error) {
-        console.log('❌ Endpoint específico de filtro falló, intentando método alternativo...');
+        console.log('❌ Endpoint específico de Control de acceso falló, intentando método alternativo...');
       }
 
-      // SEGUNDO intentar con filtro en endpoint global
+      // SEGUNDO intentar con Control de acceso en endpoint global
       try {
         const response = await api.get('/reportes/global', {
           params: {
@@ -342,8 +342,8 @@ const ReporteFiltros: React.FC = () => {
         <div className="mb-8">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">🚪 Reporte por Filtros</h1>
-              <p className="text-gray-600">Análisis detallado por filtro de acceso</p>
+              <h1 className="text-3xl font-bold text-gray-900">🚪 Reporte por Controles de acceso</h1>
+              <p className="text-gray-600">Análisis detallado por Control de acceso</p>
 
               {/* Navegación */}
               <div className="mt-4 flex flex-wrap gap-2">
@@ -357,7 +357,7 @@ const ReporteFiltros: React.FC = () => {
                   </Link>
                 )}
                 <button className="px-4 py-2 rounded-lg text-sm font-semibold bg-blue-500 text-white">
-                  🚪 Vista por Filtros
+                  🚪 Vista por Control de acceso
                 </button>
                 <Link
                   to="/reportes/personas"
@@ -440,10 +440,10 @@ const ReporteFiltros: React.FC = () => {
           </div>
         )}
 
-        {/* Información del Filtro Seleccionado */}
+        {/* Información del Control de acceso Seleccionado */}
         {!loading && filtroActual && (
           <div className="bg-blue-50 rounded-lg p-6 mb-6 border border-blue-200">
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">📋 Información del Filtro</h3>
+            <h3 className="text-lg font-semibold text-blue-900 mb-2">📋 Información del Control de acceso</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <span className="text-sm font-medium text-blue-700">Nombre:</span>
@@ -470,10 +470,10 @@ const ReporteFiltros: React.FC = () => {
         {/* Mostrar información cuando no hay filtro seleccionado */}
         {!loading && !filtroSeleccionado && (
           <div className="bg-yellow-50 rounded-lg p-6 mb-6 border border-yellow-200">
-            <h3 className="text-lg font-semibold text-yellow-800 mb-2">ℹ️ Reporte de Todos los Filtros</h3>
+            <h3 className="text-lg font-semibold text-yellow-800 mb-2">ℹ️ Reporte de Todos los Control de acceso</h3>
             <p className="text-yellow-700">
-              Mostrando estadísticas combinadas de todos los filtros activos en el sistema.
-              Seleccione un filtro específico para ver análisis detallados.
+              Mostrando estadísticas combinadas de todos los Control de acceso activos en el sistema.
+              Seleccione un Control de acceso específico para ver análisis detallados.
             </p>
           </div>
         )}
@@ -513,7 +513,7 @@ const ReporteFiltros: React.FC = () => {
 
               <div className="bg-white rounded-lg p-6 shadow-sm border">
                 <div className="text-2xl font-bold text-purple-600">{estadisticas.conAcompanante}</div>
-                <div className="text-sm text-gray-600">Con Acompañante</div>
+                <div className="text-sm text-gray-600">Con Escolta</div>
                 <div className="text-xs text-blue-600 mt-1">
                   {estadisticas.totalAccesos > 0 ?
                     `${((estadisticas.conAcompanante / estadisticas.totalAccesos) * 100).toFixed(1)}% de visitas`

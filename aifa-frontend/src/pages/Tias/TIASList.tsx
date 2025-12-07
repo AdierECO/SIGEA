@@ -6,7 +6,7 @@ import type { TIASWithRelations } from '../../types';
 import Navbar from '../../components/Navbar';
 import Swal from 'sweetalert2';
 
-// Interface para la respuesta de TIAS disponibles
+// Interface para la respuesta de Gafete disponibles
 interface TIASDisponible {
     id: string;
     tipo: string;
@@ -41,10 +41,10 @@ const TIASList: React.FC = () => {
             const response = await api.get('/tias');
             setTias(response.data.tias);
         } catch (error) {
-            console.error('Error fetching TIAS:', error);
+            console.error('Error fetching Gafete:', error);
             Swal.fire({
                 title: 'Error',
-                text: 'Error al cargar los TIAS',
+                text: 'Error al cargar los Gafetes',
                 icon: 'error',
                 confirmButtonColor: '#ef4444'
             });
@@ -63,7 +63,7 @@ const TIASList: React.FC = () => {
             setTiasDisponibles(disponiblesSet);
         } catch (error) {
             console.error('Error fetching TIAS disponibles:', error);
-            // Si falla, asumimos que ningún TIAS está disponible
+            // Si falla, asumimos que ningún Gafete está disponible
             setTiasDisponibles(new Set<string>());
         }
     };
@@ -82,7 +82,7 @@ const TIASList: React.FC = () => {
 
     const handleDelete = async (id: string, tipo: string) => {
         const result = await Swal.fire({
-            title: '¿Eliminar TIA?',
+            title: '¿Eliminar Gafete?',
             text: `¿Estás seguro de eliminar "${id}" - ${tipo}?`,
             icon: 'warning',
             showCancelButton: true,
@@ -113,14 +113,14 @@ const TIASList: React.FC = () => {
             // Recargar ambos endpoints después de eliminar
             await Promise.all([fetchTIAS(), fetchTIASDisponibles()]);
         } catch (error: any) {
-            console.error('Error deleting TIA:', error);
+            console.error('Error deleting Gafete:', error);
 
             await Swal.fire({
                 title: 'Error',
                 html: `
                     <div class="text-left">
                         <p>No se pudo eliminar TIAS:</p>
-                        <p class="mt-1 text-red-600 font-medium">${error.response?.data?.error || 'Error al eliminar TIA'}</p>
+                        <p class="mt-1 text-red-600 font-medium">${error.response?.data?.error || 'Error al eliminar Gafete de visita'}</p>
                     </div>
                 `,
                 icon: 'error',
@@ -129,12 +129,12 @@ const TIASList: React.FC = () => {
         }
     };
 
-    // Función para determinar si una TIA está disponible (usando el endpoint de disponibles)
+    // Función para determinar si un Gafete está disponible (usando el endpoint de disponibles)
     const estaDisponible = (tiasItem: TIASWithRelations) => {
         return tiasDisponibles.has(tiasItem.id);
     };
 
-    // Función para determinar si una TIA está en uso
+    // Función para determinar si un Gafete está en uso
     const estaEnUso = (tiasItem: TIASWithRelations) => {
         return !estaDisponible(tiasItem);
     };
@@ -156,7 +156,7 @@ const TIASList: React.FC = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-lg">Cargando TIAS...</div>
+                <div className="text-lg">Cargando Gafetes...</div>
             </div>
         );
     }
@@ -169,7 +169,7 @@ const TIASList: React.FC = () => {
                 <div className="mb-8">
                     <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">🏷️ Gestión de TIAS</h1>
+                            <h1 className="text-3xl font-bold text-gray-900">🏷️ Gestión de Gafetes de visita</h1>
                             <p className="text-gray-600 mt-2">Administre las Tarjetas de Identificación de Acceso Seguro</p>
                         </div>
                         {isAdmin && (
@@ -184,7 +184,7 @@ const TIASList: React.FC = () => {
                                     onClick={handleCreate}
                                     className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold"
                                 >
-                                    + Crear TIA
+                                    + Crear Gafete de visita
                                 </button>
                             </div>
                         )}
@@ -213,7 +213,7 @@ const TIASList: React.FC = () => {
                         <div className="text-2xl font-bold text-purple-600">
                             {filtrosUnicos.length}
                         </div>
-                        <div className="text-sm text-gray-600">Filtros Asignados</div>
+                        <div className="text-sm text-gray-600">Controles de acceso Asignados</div>
                     </div>
                 </div>
 
@@ -224,21 +224,21 @@ const TIASList: React.FC = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
                             <input
                                 type="text"
-                                placeholder="Buscar por ID, tipo o filtro..."
+                                placeholder="Buscar por ID, tipo o Control de acceso..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Filtro</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Control de acceso</label>
                             <select
                                 value={filterFiltro}
                                 onChange={(e) => setFilterFiltro(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                                <option value="all">Todos los filtros</option>
-                                <option value="sin-filtro">Sin filtro asignado</option>
+                                <option value="all">Todos los Controles de acceso</option>
+                                <option value="sin-filtro">Sin Control de acceso asignado</option>
                                 {filtrosUnicos.map(filtroId => {
                                     const filtro = tias.find(t => t.filtroId === filtroId)?.filtro;
                                     return (
@@ -257,7 +257,7 @@ const TIASList: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Tabla de TIAS */}
+                {/* Tabla de Gafetes */}
                 <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
@@ -273,7 +273,7 @@ const TIASList: React.FC = () => {
                                         Disponibilidad
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Filtro Asignado
+                                        Control de acceso Asignado
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Accesos
@@ -363,7 +363,7 @@ const TIASList: React.FC = () => {
                     {filteredTIAS.length === 0 && (
                         <div className="text-center py-12">
                             <div className="text-6xl mb-4">🏷️</div>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">No se encontraron TIAS</h3>
+                            <h3 className="text-xl font-semibold text-gray-900 mb-2">No se encontraron Gafetes</h3>
                             <p className="text-gray-600 mb-6">
                                 {searchTerm || filterFiltro !== 'all'
                                     ? 'Intente ajustar los filtros de búsqueda'

@@ -35,7 +35,7 @@ const TIASCreateRango: React.FC = () => {
       const response = await api.get('/filtros/activos');
       setFiltros(response.data);
     } catch (error) {
-      console.error('Error fetching filtros:', error);
+      console.error('Error fetching Controles de acceso:', error);
     }
   };
 
@@ -83,7 +83,7 @@ const TIASCreateRango: React.FC = () => {
     if (cantidad > 1000) {
       await Swal.fire({
         title: 'Error',
-        text: 'No se pueden crear más de 2000 TIAS a la vez',
+        text: 'No se pueden crear más de 2000 Gafetes a la vez',
         icon: 'error',
         confirmButtonText: 'Aceptar',
         customClass: { popup: 'alert' }
@@ -94,7 +94,7 @@ const TIASCreateRango: React.FC = () => {
     if (cantidad <= 0) {
       await Swal.fire({
         title: 'Error',
-        text: 'El rango debe contener al menos 1 TIAS',
+        text: 'El rango debe contener al menos 1 Gafete',
         icon: 'error',
         confirmButtonText: 'Aceptar',
         customClass: { popup: 'alert' }
@@ -104,10 +104,10 @@ const TIASCreateRango: React.FC = () => {
 
     // Confirmación antes de crear
     const result = await Swal.fire({
-      title: `¿Crear ${cantidad} TIAS?`,
+      title: `¿Crear ${cantidad} Gafetes?`,
       html: `
         <div class="text-left">
-          <p>Se crearán <strong>${cantidad} TIAS</strong> con las siguientes características:</p>
+          <p>Se crearán <strong>${cantidad} Gafetes </strong> con las siguientes características:</p>
           <ul class="mt-2 text-sm space-y-1">
             <li>• Tipo: <strong>${formData.tipo}</strong></li>
             <li>• Prefijo: <strong>${formData.prefijo}</strong></li>
@@ -120,7 +120,7 @@ const TIASCreateRango: React.FC = () => {
       showCancelButton: true,
       confirmButtonColor: '#10b981',
       cancelButtonColor: '#6b7280',
-      confirmButtonText: `Sí, crear ${cantidad} TIAS`,
+      confirmButtonText: `Sí, crear ${cantidad} Gafetes`,
       cancelButtonText: 'Cancelar',
       customClass: { popup: 'alert' }
     });
@@ -148,17 +148,17 @@ const TIASCreateRango: React.FC = () => {
           </div>
         `,
         icon: 'success',
-        confirmButtonText: 'Ver TIAS',
+        confirmButtonText: 'Ver Gafetes',
         confirmButtonColor: '#10b981',
         customClass: { popup: 'alert' }
       });
 
       navigate('/tias');
     } catch (error: any) {
-      console.error('Error creating TIAS por rango:', error);
+      console.error('Error creating Gafete por rango:', error);
       await Swal.fire({
         title: 'Error',
-        text: error.response?.data?.error || 'Error al crear los TIAS',
+        text: error.response?.data?.error || 'Error al crear los Gafetes',
         icon: 'error',
         confirmButtonText: 'Aceptar',
         customClass: { popup: 'alert' }
@@ -195,7 +195,7 @@ const TIASCreateRango: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">🏷️ Crear TIAS por Rango</h1>
+            <h1 className="text-3xl font-bold text-gray-900">🏷️ Crear Gafetes de visita por Rango</h1>
             <p className="text-gray-600 mt-2">Cree múltiples Tarjetas de Identificación de Acceso Seguro de forma masiva</p>
           </div>
 
@@ -208,7 +208,7 @@ const TIASCreateRango: React.FC = () => {
                 {/* Tipo */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tipo de TIAS *
+                    Tipo de Gafete *
                   </label>
                   <select
                     name="tipo"
@@ -218,7 +218,6 @@ const TIASCreateRango: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="GIA">GIA</option>
-                    <option value="SGN">SGN</option>
                   </select>
                 </div>
 
@@ -268,10 +267,10 @@ const TIASCreateRango: React.FC = () => {
                   <p className="text-xs text-gray-500 mt-1">Número final del rango</p>
                 </div>
 
-                {/* Filtro Asignado */}
+                {/* Control de acceso Asignado */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Filtro Asignado (opcional)
+                    Control de acceso Asignado (opcional)
                   </label>
                   <select
                     name="filtroId"
@@ -279,7 +278,7 @@ const TIASCreateRango: React.FC = () => {
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Sin filtro asignado</option>
+                    <option value="">Sin Control de acceso asignado</option>
                     {filtros.map(filtro => (
                       <option key={filtro.id} value={filtro.id}>
                         {filtro.nombre} {filtro.ubicacion && `- ${filtro.ubicacion}`}
@@ -315,7 +314,7 @@ const TIASCreateRango: React.FC = () => {
                 disabled={loading || cantidad <= 0}
                 className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 order-1 sm:order-2"
               >
-                {loading ? 'Creando...' : `Crear ${cantidad} TIAS`}
+                {loading ? 'Creando...' : `Crear ${cantidad} Gafetes`}
               </button>
             </div>
           </form>

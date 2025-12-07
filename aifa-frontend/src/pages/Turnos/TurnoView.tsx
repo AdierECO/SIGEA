@@ -37,12 +37,12 @@ const TurnoView: React.FC = () => {
     }
   };
 
-  // Función para obtener usuario con filtro asignado
+  // Función para obtener usuario con Control de acceso asignado
   const getUsuarioConFiltro = (usuarioId: number) => {
     return usuarios.find(u => u.id === usuarioId);
   };
 
-  // Función para obtener usuarios del turno con sus filtros asignados
+  // Función para obtener usuarios del turno con sus Controles de acceso asignados
   const getUsuariosConFiltro = () => {
     if (!turno?.usuarios || turno.usuarios.length === 0) return [];
 
@@ -73,7 +73,7 @@ const TurnoView: React.FC = () => {
 
   const getFiltroBadge = (usuario: any) => {
     if (!usuario.filtroAsignado) {
-      return <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">Sin filtro asignado</span>;
+      return <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">Sin Control de acceso asignado</span>;
     }
     return (
       <span
@@ -86,7 +86,7 @@ const TurnoView: React.FC = () => {
     );
   };
 
-  // Contar usuarios con filtro en el turno
+  // Contar usuarios con Control de acceso en el turno
   const contarUsuariosConFiltro = () => {
     const usuariosConFiltro = getUsuariosConFiltro().filter(tu =>
       tu.usuario?.filtroAsignado
@@ -219,8 +219,8 @@ const TurnoView: React.FC = () => {
                 <div><strong>Total accesos:</strong> {turno.accesos?.length || 0}</div>
                 <div><strong>Accesos activos:</strong> {turno.accesos?.filter(a => !a.horaSalida).length || 0}</div>
                 <div><strong>ID retenidas:</strong> {turno.accesos?.filter(a => a.identificacionId).length || 0}</div>
-                <div><strong>Usuarios con filtro:</strong> {contarUsuariosConFiltro()}</div>
-                <div><strong>Porcentaje con filtro:</strong> {usuariosConFiltro.length > 0 ?
+                <div><strong>Usuarios con Control de acceso:</strong> {contarUsuariosConFiltro()}</div>
+                <div><strong>Porcentaje con Control de acceso:</strong> {usuariosConFiltro.length > 0 ?
                   `${Math.round((contarUsuariosConFiltro() / usuariosConFiltro.length) * 100)}%` : '0%'
                 }</div>
               </div>
