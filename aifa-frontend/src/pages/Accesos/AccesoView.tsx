@@ -110,25 +110,42 @@ const AccesoView: React.FC = () => {
 
   // Función para separar la dirección del escolta
   const parseAcompananteComponents = (direccionString: string | null) => {
-    if (!direccionString) return { direccion: null, subdireccion: null, gerencia: null };
+    if (!direccionString) return { direccion: null, subdireccion: null, gerencia: null, proveedor: null };
 
     const parts = direccionString.split(' - ');
+    
+    // Verificar si es un proveedor
+    if (parts[0] === 'Proveedor' && parts.length >= 2) {
+      return {
+        direccion: parts[0] || null, // "Proveedor"
+        proveedor: parts.slice(1).join(' - ') || null, // Nombre del proveedor/empresa
+        subdireccion: null,
+        gerencia: null
+      };
+    }
+    
     return {
       direccion: parts[0] || null,
       subdireccion: parts[1] || null,
-      gerencia: parts[2] || null
+      gerencia: parts[2] || null,
+      proveedor: null
     };
+  };
+
+  // Función para verificar si es proveedor
+  const esProveedor = (direccionString: string | null): boolean => {
+    if (!direccionString) return false;
+    return direccionString.startsWith('Proveedor - ');
   };
 
   // Función para obtener quién registró el acceso
   const getRegistradoPor = () => {
+    if (acceso?.registradoPor) {
+      return acceso.registradoPor;
+    }
     
-  if (acceso?.registradoPor) {
-    return acceso.registradoPor;
-  }
-  
-  return 'No especificado';
-};
+    return 'No especificado';
+  };
 
   // Función para verificar si se puede editar
   const puedeEditar = (acceso: Acceso) => {
@@ -282,6 +299,7 @@ const AccesoView: React.FC = () => {
   //  Parsear los componentes del área y escolta
   const areaComponents = parseAreaComponents(acceso.area || '');
   const acompananteComponents = parseAcompananteComponents(acceso.direccionAcompanante || '');
+  const esAcompananteProveedor = esProveedor(acceso.direccionAcompanante || '');
 
   return (
     <div className="min-h-screen bg-gray-50 py-6 sm:py-8">
@@ -418,16 +436,24 @@ const AccesoView: React.FC = () => {
                         <strong>Dirección:</strong> {acompananteComponents.direccion}
                       </div>
                     )}
-                    {acompananteComponents.subdireccion && (
+                    
+                    {/* Condicional: Mostrar "Empresa/Proveedor" si es proveedor, o "Subdirección" si no lo es */}
+                    {esAcompananteProveedor && acompananteComponents.proveedor ? (
+                      <div className="ml-4">
+                        <strong>Empresa/Proveedor:</strong> {acompananteComponents.proveedor}
+                      </div>
+                    ) : acompananteComponents.subdireccion ? (
                       <div className="ml-4">
                         <strong>Subdirección:</strong> {acompananteComponents.subdireccion}
                       </div>
-                    )}
-                    {acompananteComponents.gerencia && (
+                    ) : null}
+                    
+                    {!esAcompananteProveedor && acompananteComponents.gerencia && (
                       <div className="ml-4">
                         <strong>Gerencia:</strong> {acompananteComponents.gerencia}
                       </div>
                     )}
+                    
                     {!acompananteComponents.direccion && (
                       <div className="text-gray-500 italic">No especificada</div>
                     )}

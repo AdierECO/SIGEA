@@ -22,6 +22,7 @@ const OperativoDashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [turnoAsignado, setTurnoAsignado] = useState<any>(null);
+  const [filtroAsignado, setFiltroAsignado] = useState<any>(null);
 
   useEffect(() => {
     if (usuario?.rol === 'OPERATIVO' && (!usuario?.nombre?.trim() || !usuario?.apellidos?.trim())) {
@@ -31,6 +32,8 @@ const OperativoDashboard: React.FC = () => {
 
   // Determinar si el operativo tiene Control de acceso asignado
   const tieneFiltroAsignado = usuario?.filtroAsignadoId !== null && usuario?.filtroAsignadoId !== undefined;
+  // Determinar si el filtro asignado está activo
+  const filtroEstaActivo = filtroAsignado?.estaActivo === true;
 
   useEffect(() => {
     fetchDashboardData();
@@ -51,6 +54,11 @@ const OperativoDashboard: React.FC = () => {
         turnosRes.data?.data || turnosRes.data?.turnos || [];
 
       const usuarioData = usuarioRes.data;
+
+      // Obtener información del filtro asignado
+      if (usuarioData.filtroAsignado) {
+        setFiltroAsignado(usuarioData.filtroAsignado);
+      }
 
       // Filtrar accesos según si tiene Control de acceso
       let misAccesos = [];
@@ -116,13 +124,13 @@ const OperativoDashboard: React.FC = () => {
   };
 
   const navigateToCrearAcceso = () => {
-    if (tieneFiltroAsignado) {
+    if (tieneFiltroAsignado && filtroEstaActivo) {
       navigate('/accesos/crear');
     }
   };
 
   const navigateToCrearAccesoEspecial = () => {
-    if (tieneFiltroAsignado) {
+    if (tieneFiltroAsignado && filtroEstaActivo) {
       navigate('/accesospecial/crear');
     }
   };
@@ -130,22 +138,25 @@ const OperativoDashboard: React.FC = () => {
   const navigateToAccesos = () => navigate('/accesos');
 
   const navigateToIdentificacionesRetenidas = () => {
-    if (tieneFiltroAsignado) {
+    if (tieneFiltroAsignado && filtroEstaActivo) {
       navigate('/identificaciones/retenidas');
     }
   };
 
   const navigateToIdentificaciones = () => {
-    if (tieneFiltroAsignado) {
+    if (tieneFiltroAsignado && filtroEstaActivo) {
       navigate('/identificaciones');
     }
   };
 
   const navigateToExportar = () => {
-    if (tieneFiltroAsignado) {
+    if (tieneFiltroAsignado && filtroEstaActivo) {
       navigate('/exportar');
     }
   };
+
+  // Determinar si se pueden mostrar los botones de registro
+  const puedeRegistrarAccesos = tieneFiltroAsignado && filtroEstaActivo;
 
   if (loading) {
     return (
@@ -188,8 +199,8 @@ const OperativoDashboard: React.FC = () => {
           </div>
 
           <div
-            onClick={tieneFiltroAsignado ? navigateToIdentificaciones : undefined}
-            className={`bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/20 ${tieneFiltroAsignado ? 'cursor-pointer hover:bg-white/20' : 'opacity-70'
+            onClick={puedeRegistrarAccesos ? navigateToIdentificaciones : undefined}
+            className={`bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/20 ${puedeRegistrarAccesos ? 'cursor-pointer hover:bg-white/20' : 'opacity-70'
               } transition duration-200`}
           >
             <div className="text-cyan-200 text-sm font-semibold">ID Retenidas</div>
@@ -200,7 +211,7 @@ const OperativoDashboard: React.FC = () => {
           </div>
 
           <div
-            className={`bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/20 ${tieneFiltroAsignado ? 'hover:bg-white/20' : 'opacity-70'
+            className={`bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/20 ${puedeRegistrarAccesos ? 'hover:bg-white/20' : 'opacity-70'
               } transition duration-200`}
           >
             <div className="text-cyan-200 text-sm font-semibold">Estado Turno</div>
@@ -222,8 +233,8 @@ const OperativoDashboard: React.FC = () => {
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/20">
             <h3 className="text-white font-semibold mb-4 text-lg">🚪 Control de Accesos</h3>
             <div className="space-y-3 sm:space-y-4">
-              {/* SOLO OPERATIVOS CON Control de acceso pueden registrar accesos */}
-              {tieneFiltroAsignado ? (
+              {/* SOLO OPERATIVOS CON Control de acceso ACTIVO pueden registrar accesos */}
+              {puedeRegistrarAccesos ? (
                 <>
                   <button
                     onClick={navigateToCrearAcceso}
@@ -250,8 +261,31 @@ const OperativoDashboard: React.FC = () => {
                     Registrar accesos y salidas de visitantes
                   </p>
                 </>
+              ) : tieneFiltroAsignado && !filtroEstaActivo ? (
+                // OPERATIVOS CON Control de acceso DESACTIVADO
+                <>
+                  <div className="mb-4 p-3 bg-red-500/20 backdrop-blur-lg rounded-lg border border-red-400/30 text-center">
+                    <div className="text-red-200 text-base sm:text-lg font-semibold mb-1">
+                      ⚠️ Control de acceso Desactivado
+                    </div>
+                    <p className="text-red-200 text-sm">
+                      El Control de acceso "{filtroAsignado?.nombre}" está desactivado.
+                      No puede registrar nuevos accesos.
+                    </p>
+                  </div>
+                  <button
+                    onClick={navigateToAccesos}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white py-3 sm:py-4 px-4 rounded-lg transition duration-200 flex items-center justify-center text-base sm:text-lg"
+                  >
+                    <span className="mr-3">👁️</span>
+                    Ver Registros del Control de acceso
+                  </button>
+                  <p className="text-yellow-200 text-sm text-center mt-2">
+                    El Control de acceso está desactivado
+                  </p>
+                </>
               ) : (
-                // OPERATIVOS SIN Control de acceso solo pueden ver registros
+                // OPERATIVOS SIN Control de acceso
                 <>
                   <button
                     onClick={navigateToAccesos}
@@ -268,29 +302,18 @@ const OperativoDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* GESTIÓN DE TURNOS Y DATOS - SOLO CON Control de acceso */}
-          {tieneFiltroAsignado && (
+          {/* GESTIÓN DE TURNOS Y DATOS - SOLO CON Control de acceso ACTIVO */}
+          {puedeRegistrarAccesos && (
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/20">
               <h3 className="text-white font-semibold mb-4 text-lg">🔄 Gestión Operativa</h3>
               <div className="space-y-3 sm:space-y-4">
-                {tieneFiltroAsignado && (
-                  <div className="space-y-3 sm:space-y-4">
-                    <button
-                      onClick={navigateToIdentificacionesRetenidas}
-                      className="w-full bg-red-500 hover:bg-red-600 text-white py-3 sm:py-4 px-4 rounded-lg transition duration-200 flex items-center justify-center text-base sm:text-lg"
-                    >
-                      <span className="mr-3">📋</span>
-                      Identificaciones Retenidas
-                    </button>
-                  </div>
-                )}
-                {!tieneFiltroAsignado && (
-                  <div className="mt-6 sm:mt-8 bg-yellow-500/20 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-yellow-400/30 text-center">
-                    <div className="text-yellow-200 text-base sm:text-lg font-semibold mb-2">
-                      ⚠️ Modo Solo Lectura
-                    </div>
-                  </div>
-                )}
+                <button
+                  onClick={navigateToIdentificacionesRetenidas}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white py-3 sm:py-4 px-4 rounded-lg transition duration-200 flex items-center justify-center text-base sm:text-lg"
+                >
+                  <span className="mr-3">📋</span>
+                  Identificaciones Retenidas
+                </button>
                 <button
                   onClick={navigateToExportar}
                   className="w-full bg-teal-500 hover:bg-teal-600 text-white py-3 sm:py-4 px-4 rounded-lg transition duration-200 flex items-center justify-center text-base sm:text-lg"
@@ -301,6 +324,20 @@ const OperativoDashboard: React.FC = () => {
                 <p className="text-cyan-200 text-sm text-center mt-2">
                   Visualizar identificaciones retenidas y exportar registros para consolidación
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* Mensaje cuando el filtro está desactivado */}
+          {tieneFiltroAsignado && !filtroEstaActivo && (
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-6 border border-white/20">
+              <h3 className="text-white font-semibold mb-4 text-lg">ℹ️ Información del Sistema</h3>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="bg-red-500/20 backdrop-blur-lg rounded-lg p-4 border border-red-400/30">
+                  <p className="text-yellow-200 text-sm mt-3">
+                    Contacte al administrador para reactivar el Control de acceso.
+                  </p>
+                </div>
               </div>
             </div>
           )}

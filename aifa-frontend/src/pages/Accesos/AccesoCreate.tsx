@@ -7,7 +7,7 @@ import type { CreateAccesoDto } from '../../types';
 import Navbar from '../../components/Navbar';
 import { useOrganigrama } from '../../hooks/useOrganigrama';
 import Swal from "sweetalert2";
-import {requiereAcompanante } from '../../services/organigrama.service'; 
+import { requiereAcompanante } from '../../services/organigrama.service'; 
 
 const TIPOS_IDENTIFICACION = [
   { value: 'INE', label: 'INE' },
@@ -27,8 +27,8 @@ const AccesoCreate: React.FC = () => {
   const [tiasDisponibles, setTiasDisponibles] = useState<any[]>([]);
   const [cargandoTIAS, setCargandoTIAS] = useState(false);
   const [requiereAcompananteArea, setRequiereAcompananteArea] = useState(false);
+  const [proveedorAcompanante, setProveedorAcompanante] = useState('');
 
-  // Hooks del organigrama para Área de Visita y Escolta
   const organigramaAreaVisita = useOrganigrama();
   const organigramaAcompanante = useOrganigrama();
 
@@ -58,7 +58,7 @@ const AccesoCreate: React.FC = () => {
     numero: ''
   });
 
-  const [sinIdentificacion,] = useState(false);
+  const [sinIdentificacion] = useState(false);
 
   useEffect(() => {
     if (usuario?.rol === 'OPERATIVO' && (!usuario?.nombre?.trim() || !usuario?.apellidos?.trim())) {
@@ -81,7 +81,6 @@ const AccesoCreate: React.FC = () => {
     }
   }, [filtroOperativo?.id]);
 
-  // Efecto para verificar requerimiento de Escolta cuando cambia el área
   useEffect(() => {
     const direccion = organigramaAreaVisita.direccionSeleccionada;
     const subdireccion = organigramaAreaVisita.subdireccionSeleccionada;
@@ -91,7 +90,6 @@ const AccesoCreate: React.FC = () => {
       const requiere = requiereAcompanante(direccion, subdireccion, gerencia);
       setRequiereAcompananteArea(requiere);
       
-      // Si el área requiere Escolta, forzar el checkbox
       if (requiere) {
         setFormData(prev => ({ 
           ...prev, 
@@ -106,6 +104,16 @@ const AccesoCreate: React.FC = () => {
     organigramaAreaVisita.subdireccionSeleccionada,
     organigramaAreaVisita.gerenciaSeleccionada
   ]);
+
+  const getDireccionCompletaAcompanante = () => {
+    const direccion = organigramaAcompanante.direccionSeleccionada;
+    
+    if (direccion === 'Proveedor' && proveedorAcompanante.trim()) {
+      return `Proveedor - ${proveedorAcompanante.trim()}`;
+    }
+    
+    return organigramaAcompanante.getDireccionCompleta();
+  };
 
   const cargarDatosOperativo = async () => {
     try {
@@ -199,7 +207,6 @@ const AccesoCreate: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validaciones básicas
     if (!formData.nombre?.trim() || !formData.apellidos?.trim()) {
       showAlert('Error', 'Nombre y apellidos son requeridos', 'error');
       return;
@@ -210,14 +217,12 @@ const AccesoCreate: React.FC = () => {
       return;
     }
 
-    // Validación de área de visita
     const areaVisitaCompleta = organigramaAreaVisita.getDireccionCompleta();
     if (!areaVisitaCompleta) {
       showAlert('Error', 'Debe seleccionar al menos una dirección para el área de visita', 'error');
       return;
     }
 
-    // Validación de escolta - AHORA también verifica si el área lo requiere
     if (requiereAcompananteArea && !formData.tieneAcompanante) {
       showAlert('Error', 'Esta área requiere escolta obligatoriamente', 'error');
       return;
@@ -229,27 +234,28 @@ const AccesoCreate: React.FC = () => {
         return;
       }
 
-      // Validar dirección administrativa del escolta
-      const direccionAcompananteCompleta = organigramaAcompanante.getDireccionCompleta();
+      const direccionAcompananteCompleta = getDireccionCompletaAcompanante();
       if (!direccionAcompananteCompleta) {
-        showAlert('Error', 'Debe seleccionar al menos una dirección administrativa para el escolta', 'error');
+        showAlert('Error', 'Debe completar la información de ubicación para el escolta', 'error');
+        return;
+      }
+
+      if (organigramaAcompanante.direccionSeleccionada === 'Proveedor' && !proveedorAcompanante.trim()) {
+        showAlert('Error', 'Debe ingresar el nombre de la empresa/proveedor del escolta', 'error');
         return;
       }
     }
 
-    // Validar que tenga turno asignado
     if (!formData.turnoId) {
       showAlert('Error', 'No tiene un turno activo asignado. No puede registrar accesos.', 'error');
       return;
     }
 
-    // Validar que se haya seleccionado un gafete de viisita disponible
     if (!formData.tiasId) {
       showAlert('Error', 'Debe seleccionar un Gafete de visitante disponible', 'error');
       return;
     }
 
-    // Validar grupo si viene en grupo
     if (formData.conGrupo && (!formData.cantidadGrupo || formData.cantidadGrupo < 1)) {
       showAlert('Error', 'Si viene en grupo, debe especificar la cantidad de personas', 'error');
       return;
@@ -260,7 +266,6 @@ const AccesoCreate: React.FC = () => {
     try {
       let identificacionId = null;
 
-      // Crear identificación solo si NO está marcado "sin identificación"
       if (!sinIdentificacion) {
         try {
           if (identificacionData.numero.trim() || identificacionData.tipo !== 'OTRO') {
@@ -282,7 +287,6 @@ const AccesoCreate: React.FC = () => {
         }
       }
 
-      // Preparar datos para enviar al backend
       const accesoData: CreateAccesoDto = {
         nombre: formData.nombre.trim(),
         apellidos: formData.apellidos.trim(),
@@ -297,7 +301,7 @@ const AccesoCreate: React.FC = () => {
         filtroId: formData.filtroId,
         tieneAcompanante: formData.tieneAcompanante,
         nombreAcompanante: formData.tieneAcompanante ? formData.nombreAcompanante?.trim() || '' : '',
-        direccionAcompanante: formData.tieneAcompanante ? organigramaAcompanante.getDireccionCompleta() : '',
+        direccionAcompanante: formData.tieneAcompanante ? getDireccionCompletaAcompanante() : '',
         conGrupo: formData.conGrupo,
         cantidadGrupo: formData.conGrupo ? formData.cantidadGrupo : null,
         tiasId: formData.tiasId || null,
@@ -356,9 +360,7 @@ const AccesoCreate: React.FC = () => {
     }));
   };
 
-  // Manejar cambio del checkbox de escolta
   const handleAcompananteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Si el área requiere escolta, no permitir desmarcar
     if (requiereAcompananteArea && !e.target.checked) {
       showAlert('Advertencia', 'Esta área requiere escolta obligatoriamente', 'warning');
       return;
@@ -374,8 +376,15 @@ const AccesoCreate: React.FC = () => {
 
     if (!checked) {
       organigramaAcompanante.resetOrganigrama();
+      setProveedorAcompanante('');
     }
   };
+
+  const handleProveedorAcompananteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProveedorAcompanante(e.target.value);
+  };
+
+  const isProveedorSeleccionado = organigramaAcompanante.direccionSeleccionada === 'Proveedor';
 
   if (cargandoDatos) {
     return (
@@ -697,6 +706,7 @@ const AccesoCreate: React.FC = () => {
                           onChange={(e) => {
                             organigramaAcompanante.setDireccionSeleccionada(e.target.value);
                             organigramaAcompanante.resetSubdirecciones();
+                            setProveedorAcompanante('');
                           }}
                           required
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -710,70 +720,93 @@ const AccesoCreate: React.FC = () => {
                         </select>
                       </div>
 
-                      {/* Subdirección - Solo si hay subdirecciones disponibles */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Subdirección
-                          {organigramaAcompanante.subdirecciones.length === 0 && (
-                            <span className="ml-2 text-gray-500 text-sm">(No disponible)</span>
-                          )}
-                        </label>
-                        <select
-                          value={organigramaAcompanante.subdireccionSeleccionada}
-                          onChange={(e) => {
-                            organigramaAcompanante.setSubdireccionSeleccionada(e.target.value);
-                            organigramaAcompanante.resetGerencias();
-                          }}
-                          disabled={!organigramaAcompanante.direccionSeleccionada || organigramaAcompanante.subdirecciones.length === 0}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <option value="">{
-                            organigramaAcompanante.subdirecciones.length === 0 
-                              ? "Sin subdirecciones disponibles" 
-                              : "Seleccione subdirección"
-                          }</option>
-                          {organigramaAcompanante.subdirecciones.map(subdireccion => (
-                            <option key={subdireccion.value} value={subdireccion.value}>
-                              {subdireccion.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      {/* Condicional: Mostrar input para Proveedor o selects normales */}
+                      {isProveedorSeleccionado ? (
+                        // Input para nombre de empresa/proveedor
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre de Empresa/Proveedor *
+                          </label>
+                          <input
+                            type="text"
+                            value={proveedorAcompanante}
+                            onChange={handleProveedorAcompananteChange}
+                            required
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            placeholder="Ej. Constructora ABC S.A. de C.V."
+                          />
+                          <p className="mt-1 text-xs text-gray-500">
+                            Ingrese el nombre completo de la empresa o proveedor
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Subdirección - Solo si hay subdirecciones disponibles */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Subdirección
+                              {organigramaAcompanante.subdirecciones.length === 0 && (
+                                <span className="ml-2 text-gray-500 text-sm">(No disponible)</span>
+                              )}
+                            </label>
+                            <select
+                              value={organigramaAcompanante.subdireccionSeleccionada}
+                              onChange={(e) => {
+                                organigramaAcompanante.setSubdireccionSeleccionada(e.target.value);
+                                organigramaAcompanante.resetGerencias();
+                              }}
+                              disabled={!organigramaAcompanante.direccionSeleccionada || organigramaAcompanante.subdirecciones.length === 0}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <option value="">{
+                                organigramaAcompanante.subdirecciones.length === 0 
+                                  ? "Sin subdirecciones disponibles" 
+                                  : "Seleccione subdirección"
+                              }</option>
+                              {organigramaAcompanante.subdirecciones.map(subdireccion => (
+                                <option key={subdireccion.value} value={subdireccion.value}>
+                                  {subdireccion.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
 
-                      {/* Gerencia - Solo si hay gerencias disponibles */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Gerencia
-                          {organigramaAcompanante.gerencias.length === 0 && (
-                            <span className="ml-2 text-gray-500 text-sm">(No disponible)</span>
-                          )}
-                        </label>
-                        <select
-                          value={organigramaAcompanante.gerenciaSeleccionada}
-                          onChange={(e) => organigramaAcompanante.setGerenciaSeleccionada(e.target.value)}
-                          disabled={!organigramaAcompanante.subdireccionSeleccionada || organigramaAcompanante.gerencias.length === 0}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <option value="">{
-                            organigramaAcompanante.gerencias.length === 0 
-                              ? "Sin gerencias disponibles" 
-                              : "Seleccione gerencia"
-                          }</option>
-                          {organigramaAcompanante.gerencias.map(gerencia => (
-                            <option key={gerencia.value} value={gerencia.value}>
-                              {gerencia.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                          {/* Gerencia - Solo si hay gerencias disponibles */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Gerencia
+                              {organigramaAcompanante.gerencias.length === 0 && (
+                                <span className="ml-2 text-gray-500 text-sm">(No disponible)</span>
+                              )}
+                            </label>
+                            <select
+                              value={organigramaAcompanante.gerenciaSeleccionada}
+                              onChange={(e) => organigramaAcompanante.setGerenciaSeleccionada(e.target.value)}
+                              disabled={!organigramaAcompanante.subdireccionSeleccionada || organigramaAcompanante.gerencias.length === 0}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <option value="">{
+                                organigramaAcompanante.gerencias.length === 0 
+                                  ? "Sin gerencias disponibles" 
+                                  : "Seleccione gerencia"
+                              }</option>
+                              {organigramaAcompanante.gerencias.map(gerencia => (
+                                <option key={gerencia.value} value={gerencia.value}>
+                                  {gerencia.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* Vista previa de la dirección del Escolta */}
-                    {organigramaAcompanante.getDireccionCompleta() && (
+                    {getDireccionCompletaAcompanante() && (
                       <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                         <p className="text-sm text-green-800">
                           <strong>Ubicacion a la que pertenece el Escolta:</strong><br />
-                          {organigramaAcompanante.getDireccionCompleta()}
+                          {getDireccionCompletaAcompanante()}
                         </p>
                       </div>
                     )}
@@ -855,7 +888,10 @@ const AccesoCreate: React.FC = () => {
               </button>
               <button
                 type="submit"
-                disabled={loading || !turnoOperativo || !filtroOperativo || !organigramaAreaVisita.getDireccionCompleta() || (formData.tieneAcompanante && !organigramaAcompanante.getDireccionCompleta()) || tiasDisponibles.length === 0 || !formData.tiasId}
+                disabled={loading || !turnoOperativo || !filtroOperativo || !organigramaAreaVisita.getDireccionCompleta() || 
+                  (formData.tieneAcompanante && !getDireccionCompletaAcompanante()) || 
+                  (formData.tieneAcompanante && isProveedorSeleccionado && !proveedorAcompanante.trim()) ||
+                  tiasDisponibles.length === 0 || !formData.tiasId}
                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition duration-200 flex items-center"
               >
                 {loading ? (

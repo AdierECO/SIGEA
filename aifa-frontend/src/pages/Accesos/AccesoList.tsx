@@ -16,10 +16,12 @@ const AccesoList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { usuario } = useAuth();
+  const [filtroAsignado, setFiltroAsignado] = useState<any>(null);
 
   useEffect(() => {
     fetchAccesos();
     fetchFiltrosDisponibles();
+    fetchUsuarioFiltroAsignado();
   }, []);
 
   useEffect(() => {
@@ -82,6 +84,20 @@ const AccesoList: React.FC = () => {
     }
   };
 
+  const fetchUsuarioFiltroAsignado = async () => {
+    try {
+      if (usuario?.rol === 'OPERATIVO' && usuario.id) {
+        const response = await api.get(`/usuarios/${usuario.id}`);
+        const usuarioData = response.data;
+        if (usuarioData.filtroAsignado) {
+          setFiltroAsignado(usuarioData.filtroAsignado);
+        }
+      }
+    } catch (error) {
+      console.error('Error cargando filtro asignado:', error);
+    }
+  };
+
   const handleRegistrarSalida = async (accesoId: number) => {
 
     const { isConfirmed } = await Swal.fire({
@@ -115,6 +131,7 @@ const AccesoList: React.FC = () => {
     }
   };
 
+  // Función para verificar si se puede editar
   const puedeEditar = (acceso: Acceso) => {
     // Superadmin NO puede editar
     if (usuario?.rol === 'SUPERADMIN' || usuario?.rol === 'ADMINISTRADOR') {
@@ -122,6 +139,10 @@ const AccesoList: React.FC = () => {
     }
     // No se puede editar si está finalizado
     if (acceso.horaSalida) {
+      return false;
+    }
+    // No se puede editar si el filtro está desactivado
+    if (filtroAsignado && !filtroAsignado.estaActivo) {
       return false;
     }
 
@@ -145,6 +166,10 @@ const AccesoList: React.FC = () => {
     if (acceso.horaSalida) {
       return false;
     }
+    // No se puede registrar salida si el filtro está desactivado
+    if (filtroAsignado && !filtroAsignado.estaActivo) {
+      return false;
+    }
 
     if (usuario?.rol === 'OPERATIVO') {
       // Solo puede registrar salida si TIENE control de acceso asignado y es el mismo control de acceso del acceso
@@ -158,12 +183,15 @@ const AccesoList: React.FC = () => {
 
   // Función para verificar si puede crear accesos
   const puedeCrearAccesos = () => {
-    // Solo OPERATIVOS CON control de acceso asignado pueden crear accesos
+    // Solo OPERATIVOS CON control de acceso asignado Y ACTIVO pueden crear accesos
     if (usuario?.rol === 'OPERATIVO' && usuario.filtroAsignadoId) {
-      return true;
+      return filtroAsignado?.estaActivo === true;
     }
     return false;
   };
+
+  // Función para verificar si el filtro asignado está activo
+  const filtroEstaActivo = filtroAsignado?.estaActivo === true;
 
   // Controles de acceso
   const filteredAccesos = accesos.filter(acceso => {
@@ -243,6 +271,9 @@ const AccesoList: React.FC = () => {
       <div className="flex flex-col space-y-1 min-w-0">
         <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-semibold">
           🚪 {filtro.nombre}
+        </span>
+        <span className={`text-xs ${filtro.estaActivo ? 'text-green-600' : 'text-red-600'}`}>
+          {filtro.estaActivo ? 'Activo' : 'Inactivo'}
         </span>
       </div>
     );
@@ -339,9 +370,17 @@ const AccesoList: React.FC = () => {
                   }`}>
                   {usuario?.rol}
                 </span>
+                {usuario?.rol === 'OPERATIVO' && usuario.filtroAsignadoId && (
+                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${filtroEstaActivo
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                    }`}>
+                    {filtroAsignado?.nombre} - {filtroEstaActivo ? 'ACTIVO' : 'DESACTIVADO'}
+                  </span>
+                )}
               </div>
             </div>
-            {/* Solo OPERATIVOS CON control de acceso pueden crear accesos */}
+            {/* Solo OPERATIVOS CON control de acceso ACTIVO pueden crear accesos */}
             {puedeCrearAccesos() && (
               <div className="flex flex-col sm:flex-row gap-2">
                 <button

@@ -27,6 +27,7 @@ const AccesoEspecial: React.FC = () => {
   const [tiasDisponibles, setTiasDisponibles] = useState<any[]>([]);
   const [cargandoTIAS, setCargandoTIAS] = useState(false);
   const [, setRequiereAcompananteArea] = useState(true); // Por defecto true para acceso especial
+  const [proveedorAcompanante, setProveedorAcompanante] = useState('');
 
   // Hooks del organigrama para Área de Visita y Escolta
   const organigramaAreaVisita = useOrganigrama();
@@ -39,7 +40,7 @@ const AccesoEspecial: React.FC = () => {
     empresa: null,
     motivo: '',
     area: '',
-    registradoPor: `${usuario?.nombre || ''} ${usuario?.apellidos || ''}`.trim(), // Agregar campo registradoPor
+    registradoPor: `${usuario?.nombre || ''} ${usuario?.apellidos || ''}`.trim(),
     identificacionId: null,
     creadoPor: usuario?.id || 0,
     turnoId: null,
@@ -97,6 +98,17 @@ const AccesoEspecial: React.FC = () => {
     organigramaAreaVisita.subdireccionSeleccionada,
     organigramaAreaVisita.gerenciaSeleccionada
   ]);
+
+  // Función para obtener la dirección completa del escolta
+  const getDireccionCompletaAcompanante = () => {
+    const direccion = organigramaAcompanante.direccionSeleccionada;
+    
+    if (direccion === 'Proveedor' && proveedorAcompanante.trim()) {
+      return `Proveedor - ${proveedorAcompanante.trim()}`;
+    }
+    
+    return organigramaAcompanante.getDireccionCompleta();
+  };
 
   const cargarDatosOperativo = async () => {
     try {
@@ -178,9 +190,15 @@ const AccesoEspecial: React.FC = () => {
     }
 
     // Validación de dirección administrativa del escolta
-    const direccionAcompananteCompleta = organigramaAcompanante.getDireccionCompleta();
+    const direccionAcompananteCompleta = getDireccionCompletaAcompanante();
     if (!direccionAcompananteCompleta) {
-      showAlert('Error', 'Debe seleccionar al menos una dirección administrativa para el escolta', 'error');
+      showAlert('Error', 'Debe completar la información de ubicación para el escolta', 'error');
+      return;
+    }
+
+    // Validación específica para Proveedor
+    if (organigramaAcompanante.direccionSeleccionada === 'Proveedor' && !proveedorAcompanante.trim()) {
+      showAlert('Error', 'Debe ingresar el nombre de la empresa/proveedor del escolta', 'error');
       return;
     }
 
@@ -255,7 +273,7 @@ const AccesoEspecial: React.FC = () => {
         filtroId: formData.filtroId,
         tieneAcompanante: true, 
         nombreAcompanante: formData.nombreAcompanante?.trim() || '',
-        direccionAcompanante: organigramaAcompanante.getDireccionCompleta(),
+        direccionAcompanante: getDireccionCompletaAcompanante(),
         conGrupo: formData.conGrupo,
         cantidadGrupo: cantidadGrupoNumero,
         tiasId: formData.tiasId?.trim() || null,
@@ -321,6 +339,14 @@ const AccesoEspecial: React.FC = () => {
       setIdentificacionData(prev => ({ ...prev, numero: '' }));
     }
   };
+
+  // Manejar cambio en el input de proveedor
+  const handleProveedorAcompananteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProveedorAcompanante(e.target.value);
+  };
+
+  // Verificar si la dirección seleccionada para el escolta es "Proveedor"
+  const isProveedorSeleccionado = organigramaAcompanante.direccionSeleccionada === 'Proveedor';
 
   if (cargandoDatos) {
     return (
@@ -572,6 +598,8 @@ const AccesoEspecial: React.FC = () => {
                         onChange={(e) => {
                           organigramaAcompanante.setDireccionSeleccionada(e.target.value);
                           organigramaAcompanante.resetSubdirecciones();
+                          // Limpiar el proveedor si cambia de dirección
+                          setProveedorAcompanante('');
                         }}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -585,70 +613,93 @@ const AccesoEspecial: React.FC = () => {
                       </select>
                     </div>
 
-                    {/* Subdirección - Solo si hay subdirecciones disponibles */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Subdirección
-                        {organigramaAcompanante.subdirecciones.length === 0 && (
-                          <span className="ml-2 text-gray-500 text-sm">(No disponible)</span>
-                        )}
-                      </label>
-                      <select
-                        value={organigramaAcompanante.subdireccionSeleccionada}
-                        onChange={(e) => {
-                          organigramaAcompanante.setSubdireccionSeleccionada(e.target.value);
-                          organigramaAcompanante.resetGerencias();
-                        }}
-                        disabled={!organigramaAcompanante.direccionSeleccionada || organigramaAcompanante.subdirecciones.length === 0}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <option value="">{
-                          organigramaAcompanante.subdirecciones.length === 0 
-                            ? "Sin subdirecciones disponibles" 
-                            : "Seleccione subdirección"
-                        }</option>
-                        {organigramaAcompanante.subdirecciones.map(subdireccion => (
-                          <option key={subdireccion.value} value={subdireccion.value}>
-                            {subdireccion.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {/* Condicional: Mostrar input para Proveedor o selects normales */}
+                    {isProveedorSeleccionado ? (
+                      // Input para nombre de empresa/proveedor
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Nombre de Empresa/Proveedor *
+                        </label>
+                        <input
+                          type="text"
+                          value={proveedorAcompanante}
+                          onChange={handleProveedorAcompananteChange}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="Ej. Constructora ABC S.A. de C.V."
+                        />
+                        <p className="mt-1 text-xs text-gray-500">
+                          Ingrese el nombre completo de la empresa o proveedor
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Subdirección - Solo si hay subdirecciones disponibles */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Subdirección
+                            {organigramaAcompanante.subdirecciones.length === 0 && (
+                              <span className="ml-2 text-gray-500 text-sm">(No disponible)</span>
+                            )}
+                          </label>
+                          <select
+                            value={organigramaAcompanante.subdireccionSeleccionada}
+                            onChange={(e) => {
+                              organigramaAcompanante.setSubdireccionSeleccionada(e.target.value);
+                              organigramaAcompanante.resetGerencias();
+                            }}
+                            disabled={!organigramaAcompanante.direccionSeleccionada || organigramaAcompanante.subdirecciones.length === 0}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <option value="">{
+                              organigramaAcompanante.subdirecciones.length === 0 
+                                ? "Sin subdirecciones disponibles" 
+                                : "Seleccione subdirección"
+                            }</option>
+                            {organigramaAcompanante.subdirecciones.map(subdireccion => (
+                              <option key={subdireccion.value} value={subdireccion.value}>
+                                {subdireccion.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                    {/* Gerencia - Solo si hay gerencias disponibles */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Gerencia
-                        {organigramaAcompanante.gerencias.length === 0 && (
-                          <span className="ml-2 text-gray-500 text-sm">(No disponible)</span>
-                        )}
-                      </label>
-                      <select
-                        value={organigramaAcompanante.gerenciaSeleccionada}
-                        onChange={(e) => organigramaAcompanante.setGerenciaSeleccionada(e.target.value)}
-                        disabled={!organigramaAcompanante.subdireccionSeleccionada || organigramaAcompanante.gerencias.length === 0}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <option value="">{
-                          organigramaAcompanante.gerencias.length === 0 
-                            ? "Sin gerencias disponibles" 
-                            : "Seleccione gerencia"
-                        }</option>
-                        {organigramaAcompanante.gerencias.map(gerencia => (
-                          <option key={gerencia.value} value={gerencia.value}>
-                            {gerencia.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                        {/* Gerencia - Solo si hay gerencias disponibles */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Gerencia
+                            {organigramaAcompanante.gerencias.length === 0 && (
+                              <span className="ml-2 text-gray-500 text-sm">(No disponible)</span>
+                            )}
+                          </label>
+                          <select
+                            value={organigramaAcompanante.gerenciaSeleccionada}
+                            onChange={(e) => organigramaAcompanante.setGerenciaSeleccionada(e.target.value)}
+                            disabled={!organigramaAcompanante.subdireccionSeleccionada || organigramaAcompanante.gerencias.length === 0}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <option value="">{
+                              organigramaAcompanante.gerencias.length === 0 
+                                ? "Sin gerencias disponibles" 
+                                : "Seleccione gerencia"
+                            }</option>
+                            {organigramaAcompanante.gerencias.map(gerencia => (
+                              <option key={gerencia.value} value={gerencia.value}>
+                                {gerencia.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Vista previa de la dirección del escolta */}
-                  {organigramaAcompanante.getDireccionCompleta() && (
+                  {getDireccionCompletaAcompanante() && (
                     <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                       <p className="text-sm text-green-800">
                         <strong>Ubicacion a la que pertenece el escolta:</strong><br />
-                        {organigramaAcompanante.getDireccionCompleta()}
+                        {getDireccionCompletaAcompanante()}
                       </p>
                     </div>
                   )}
@@ -764,7 +815,9 @@ const AccesoEspecial: React.FC = () => {
               </button>
               <button
                 type="submit"
-                disabled={loading || !turnoOperativo || !filtroOperativo || !organigramaAcompanante.getDireccionCompleta()}
+                disabled={loading || !turnoOperativo || !filtroOperativo || 
+                  !getDireccionCompletaAcompanante() || 
+                  (isProveedorSeleccionado && !proveedorAcompanante.trim())}
                 className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 transition duration-200 flex items-center"
               >
                 {loading ? (
