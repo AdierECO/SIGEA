@@ -58,3 +58,16 @@ export interface TIASWithRelations {
     accesos: number;
   };
 }
+
+export interface TIASDisponible {
+    id: string;
+    tipo: string;
+    estado: boolean;
+    filtro?: {
+        id: number;
+        nombre: string;
+    };
+    _count: {
+        accesos: number;
+    };
+}

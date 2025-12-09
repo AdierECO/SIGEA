@@ -309,12 +309,12 @@ const AccesoList: React.FC = () => {
 
   // Estadísticas basadas en todos los accesos
   const estadisticas = {
-    total: accesos.length,
-    activos: accesos.filter(a => a && !a.horaSalida).length,
-    finalizados: accesos.filter(a => a && a.horaSalida).length,
-    conAcompanante: accesos.filter(a => a && a.tieneAcompanante).length,
-    conFiltro: accesos.filter(a => a && a.filtroId).length,
-    conGrupo: accesos.filter(a => a && a.conGrupo).length
+    total: filteredAccesos.length,
+    activos: filteredAccesos.filter(a => a && !a.horaSalida).length,
+    finalizados: filteredAccesos.filter(a => a && a.horaSalida).length,
+    conAcompanante: filteredAccesos.filter(a => a && a.tieneAcompanante).length,
+    conFiltro: filteredAccesos.filter(a => a && a.filtroId).length,
+    conGrupo: filteredAccesos.filter(a => a && a.conGrupo).length
   };
 
   if (loading) {

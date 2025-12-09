@@ -116,6 +116,36 @@ const TurnoList: React.FC = () => {
     return !turno.estaActivo;
   });
 
+  // Función para obtener usuarios con sus Controles de acceso asignados
+  const getUsuariosConFiltro = (turno: Turno) => {
+    if (!turno.usuarios || turno.usuarios.length === 0) return [];
+
+    return turno.usuarios.map(turnoUsuario => {
+      const usuarioCompleto = getUsuarioConFiltro(turnoUsuario.usuarioId);
+      return {
+        ...turnoUsuario,
+        usuario: usuarioCompleto || turnoUsuario.usuario
+      };
+    });
+  };
+
+  // Contar usuarios con Control de acceso en un turno
+  const contarUsuariosConFiltro = (turno: Turno) => {
+    const usuariosConFiltro = getUsuariosConFiltro(turno).filter(tu =>
+      tu.usuario?.filtroAsignado
+    );
+    return usuariosConFiltro.length;
+  };
+
+  // Stats dinámicas basadas en los turnos filtrados
+  const estadisticas = {
+    total: filteredTurnos.length,
+    activos: filteredTurnos.filter(t => t.estaActivo).length,
+    inactivos: filteredTurnos.filter(t => !t.estaActivo).length,
+    totalAsignaciones: filteredTurnos.reduce((acc, turno) => acc + (turno.usuarios?.length || 0), 0),
+    usuariosConFiltro: filteredTurnos.reduce((acc, turno) => acc + contarUsuariosConFiltro(turno), 0)
+  };
+
   const getEstadoBadge = (turno: Turno) => {
     if (turno.estaActivo) {
       return <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">🟢 ACTIVO</span>;
@@ -141,27 +171,6 @@ const TurnoList: React.FC = () => {
 
   const getUsuariosAsignados = (turno: Turno) => {
     return turno.usuarios?.length || 0;
-  };
-
-  // Función para obtener usuarios con sus Controles de acceso asignados
-  const getUsuariosConFiltro = (turno: Turno) => {
-    if (!turno.usuarios || turno.usuarios.length === 0) return [];
-
-    return turno.usuarios.map(turnoUsuario => {
-      const usuarioCompleto = getUsuarioConFiltro(turnoUsuario.usuarioId);
-      return {
-        ...turnoUsuario,
-        usuario: usuarioCompleto || turnoUsuario.usuario
-      };
-    });
-  };
-
-  // Contar usuarios con Control de acceso en un turno
-  const contarUsuariosConFiltro = (turno: Turno) => {
-    const usuariosConFiltro = getUsuariosConFiltro(turno).filter(tu =>
-      tu.usuario?.filtroAsignado
-    );
-    return usuariosConFiltro.length;
   };
 
   // Verificar si el usuario es administrador
@@ -207,28 +216,26 @@ const TurnoList: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        {/* Stats dinámicas según filtros */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
-            <div className="text-xl sm:text-2xl font-bold text-blue-600">{turnos.length}</div>
+            <div className="text-xl sm:text-2xl font-bold text-blue-600">{estadisticas.total}</div>
             <div className="text-xs sm:text-sm text-gray-600">Total Turnos</div>
           </div>
           <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
-            <div className="text-xl sm:text-2xl font-bold text-green-600">
-              {turnos.filter(t => t.estaActivo).length}
-            </div>
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{estadisticas.activos}</div>
             <div className="text-xs sm:text-sm text-gray-600">Turnos Activos</div>
           </div>
           <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
-            <div className="text-xl sm:text-2xl font-bold text-purple-600">
-              {turnos.reduce((acc, turno) => acc + (turno.usuarios?.length || 0), 0)}
-            </div>
+            <div className="text-xl sm:text-2xl font-bold text-orange-600">{estadisticas.inactivos}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Turnos Cerrados</div>
+          </div>
+          <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
+            <div className="text-xl sm:text-2xl font-bold text-purple-600">{estadisticas.totalAsignaciones}</div>
             <div className="text-xs sm:text-sm text-gray-600">Total Asignaciones</div>
           </div>
           <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border">
-            <div className="text-xl sm:text-2xl font-bold text-orange-600">
-              {turnos.reduce((acc, turno) => acc + contarUsuariosConFiltro(turno), 0)}
-            </div>
+            <div className="text-xl sm:text-2xl font-bold text-indigo-600">{estadisticas.usuariosConFiltro}</div>
             <div className="text-xs sm:text-sm text-gray-600">Usuarios con Control de acceso</div>
           </div>
         </div>

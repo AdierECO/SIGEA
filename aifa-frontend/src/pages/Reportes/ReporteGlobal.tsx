@@ -32,17 +32,17 @@ const ReporteGlobal: React.FC = () => {
     const fin = new Date();
     const inicio = new Date();
     inicio.setDate(inicio.getDate() - 30);
-    
+
     setFechaInicio(inicio.toISOString().split('T')[0]);
     setFechaFin(fin.toISOString().split('T')[0]);
-    
+
     fetchDatos(inicio, fin);
   }, []);
 
   const fetchDatos = async (inicio: Date, fin: Date) => {
     try {
       setLoading(true);
-      
+
       const response = await api.get<ReporteGlobalResponse>('/reportes/global', {
         params: {
           fechaInicio: inicio.toISOString(),
@@ -59,13 +59,24 @@ const ReporteGlobal: React.FC = () => {
           turnos: datosBackend.turnos || [],
           usuarios: datosBackend.usuarios || []
         });
-        
+
         setEstadisticasBackend(estadisticas);
         setAgrupacionesBackend(agrupaciones);
       }
     } catch (error) {
       console.error('❌ Error fetching report data:', error);
-      alert('Error al cargar los datos del reporte');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error en el Reporte',
+        text: 'No se pudieron cargar los datos del reporte. Por favor, inténtelo de nuevo.',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#dc3545',
+        background: '#f8f9fa',
+        iconColor: '#dc3545',
+        timer: 5000,
+        timerProgressBar: true,
+        customClass: { popup: "alert" }
+      });
     } finally {
       setLoading(false);
     }
@@ -73,16 +84,38 @@ const ReporteGlobal: React.FC = () => {
 
   const handleFiltrar = () => {
     if (!fechaInicio || !fechaFin) {
-      alert('Por favor seleccione ambas fechas');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Error en el Reporte',
+        text: 'Por favor seleccione ambas fechas',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#dc3545',
+        background: '#f8f9fa',
+        iconColor: '#dc3545',
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: { popup: "alert" }
+      });
       return;
     }
 
     const inicio = new Date(fechaInicio);
     const fin = new Date(fechaFin);
     fin.setHours(23, 59, 59, 999);
-    
+
     if (inicio > fin) {
-      alert('La fecha de inicio no puede ser mayor a la fecha fin');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Error en el Reporte',
+        text: 'La fecha de inicio no puede ser mayor a la fecha fin',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#dc3545',
+        background: '#f8f9fa',
+        iconColor: '#dc3545',
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: { popup: "alert" }
+      })
       return;
     }
 
@@ -106,21 +139,21 @@ const ReporteGlobal: React.FC = () => {
         responseType: 'blob'
       });
 
-      const blob = new Blob([response.data], { 
-        type: response.headers['content-type'] 
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type']
       });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      
+
       const contentDisposition = response.headers['content-disposition'];
       let fileName = `reporte_global_${fechaInicio}_a_${fechaFin}.${formato === 'excel' ? 'xlsx' : formato}`;
-      
+
       if (contentDisposition) {
         const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
         if (fileNameMatch) fileName = fileNameMatch[1];
       }
-      
+
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
@@ -138,7 +171,18 @@ const ReporteGlobal: React.FC = () => {
 
     } catch (error) {
       console.error(`Error exportando reporte ${formato}:`, error);
-      alert(`Error al exportar el reporte en formato ${formato.toUpperCase()}`);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error en el Reporte',
+        text: `Error al exportar el reporte en formato ${formato.toUpperCase()}`,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#dc3545',
+        background: '#f8f9fa',
+        iconColor: '#dc3545',
+        timer: 3000, 
+        timerProgressBar: true,
+        customClass: { popup: "alert" }
+      })
     }
   };
 
@@ -181,7 +225,7 @@ const ReporteGlobal: React.FC = () => {
     return acc;
   }, {});
 
-  const diasPeriodo = estadisticasBackend?.diasPeriodo || 
+  const diasPeriodo = estadisticasBackend?.diasPeriodo ||
     Math.ceil((new Date(fechaFin).getTime() - new Date(fechaInicio).getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
   if (loading) {
@@ -200,26 +244,26 @@ const ReporteGlobal: React.FC = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">📊 Reporte Global</h1>
               <p className="text-gray-600">Análisis completo de accesos y estadísticas</p>
-              
+
               {/* Navegación entre vistas */}
               <div className="mt-4 flex flex-wrap gap-2">
                 <button className="px-4 py-2 rounded-lg text-sm font-semibold bg-blue-500 text-white">
                   📊 Vista Global
                 </button>
-                <Link 
+                <Link
                   to="/reportes/filtros"
                   className="px-4 py-2 rounded-lg text-sm font-semibold bg-white text-blue-600 border border-blue-600 hover:bg-blue-50"
                 >
                   🚪 Vista por Control de acceso
                 </Link>
-                <Link 
+                <Link
                   to="/reportes/personas"
                   className="px-4 py-2 rounded-lg text-sm font-semibold bg-white text-blue-600 border border-blue-600 hover:bg-blue-50"
                 >
@@ -277,8 +321,8 @@ const ReporteGlobal: React.FC = () => {
             <div className="text-2xl font-bold text-green-600">{estadisticas.accesosActivos}</div>
             <div className="text-sm text-gray-600">Accesos Activos</div>
             <div className="text-xs text-red-600 mt-1">
-              {estadisticas.totalAccesos > 0 ? 
-                `${((estadisticas.accesosActivos / estadisticas.totalAccesos) * 100).toFixed(1)}% pendientes` 
+              {estadisticas.totalAccesos > 0 ?
+                `${((estadisticas.accesosActivos / estadisticas.totalAccesos) * 100).toFixed(1)}% pendientes`
                 : '0% pendientes'}
             </div>
           </div>
@@ -287,8 +331,8 @@ const ReporteGlobal: React.FC = () => {
             <div className="text-2xl font-bold text-orange-600">{estadisticas.identificacionesRetenidas}</div>
             <div className="text-sm text-gray-600">ID Retenidas</div>
             <div className="text-xs text-orange-600 mt-1">
-              {estadisticas.totalAccesos > 0 ? 
-                `${((estadisticas.identificacionesRetenidas / estadisticas.totalAccesos) * 100).toFixed(1)}% del total` 
+              {estadisticas.totalAccesos > 0 ?
+                `${((estadisticas.identificacionesRetenidas / estadisticas.totalAccesos) * 100).toFixed(1)}% del total`
                 : '0% del total'}
             </div>
           </div>
@@ -297,8 +341,8 @@ const ReporteGlobal: React.FC = () => {
             <div className="text-2xl font-bold text-purple-600">{estadisticas.conAcompanante}</div>
             <div className="text-sm text-gray-600">Con Escolta</div>
             <div className="text-xs text-blue-600 mt-1">
-              {estadisticas.totalAccesos > 0 ? 
-                `${((estadisticas.conAcompanante / estadisticas.totalAccesos) * 100).toFixed(1)}% de visitas` 
+              {estadisticas.totalAccesos > 0 ?
+                `${((estadisticas.conAcompanante / estadisticas.totalAccesos) * 100).toFixed(1)}% de visitas`
                 : '0% de visitas'}
             </div>
           </div>
@@ -311,23 +355,23 @@ const ReporteGlobal: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">🏢 Accesos por Área</h3>
             <div className="space-y-3 max-h-80 overflow-y-auto">
               {Object.entries(accesosPorArea)
-                .sort(([,a], [,b]) => (b as number) - (a as number))
+                .sort(([, a], [, b]) => (b as number) - (a as number))
                 .map(([area, count]) => (
-                <div key={area} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 flex-1 truncate" title={area}>{area}</span>
-                  <div className="flex items-center w-32">
-                    <div className="w-24 bg-gray-200 rounded-full h-2 mr-3">
-                      <div 
-                        className="bg-blue-500 h-2 rounded-full" 
-                        style={{ 
-                          width: `${estadisticas.totalAccesos > 0 ? (Number(count) / estadisticas.totalAccesos) * 100 : 0}%` 
-                        }}
-                      ></div>
+                  <div key={area} className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600 flex-1 truncate" title={area}>{area}</span>
+                    <div className="flex items-center w-32">
+                      <div className="w-24 bg-gray-200 rounded-full h-2 mr-3">
+                        <div
+                          className="bg-blue-500 h-2 rounded-full"
+                          style={{
+                            width: `${estadisticas.totalAccesos > 0 ? (Number(count) / estadisticas.totalAccesos) * 100 : 0}%`
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-semibold w-8 text-right">{count}</span>
                     </div>
-                    <span className="text-sm font-semibold w-8 text-right">{count}</span>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
 
@@ -363,16 +407,16 @@ const ReporteGlobal: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">📋 Accesos por Motivo</h3>
             <div className="space-y-3 max-h-80 overflow-y-auto">
               {Object.entries(accesosPorMotivo)
-                .sort(([,a], [,b]) => (b as number) - (a as number))
+                .sort(([, a], [, b]) => (b as number) - (a as number))
                 .slice(0, 10)
                 .map(([motivo, count]) => (
-                <div key={motivo} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                  <span className="text-sm text-gray-700 flex-1 truncate" title={motivo}>{motivo}</span>
-                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold min-w-8 text-center">
-                    {count}
-                  </span>
-                </div>
-              ))}
+                  <div key={motivo} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <span className="text-sm text-gray-700 flex-1 truncate" title={motivo}>{motivo}</span>
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold min-w-8 text-center">
+                      {count}
+                    </span>
+                  </div>
+                ))}
             </div>
           </div>
 
@@ -381,23 +425,23 @@ const ReporteGlobal: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">🚪 Accesos por Control de acceso</h3>
             <div className="space-y-3 max-h-80 overflow-y-auto">
               {Object.entries(accesosPorFiltro)
-                .sort(([,a], [,b]) => (b as number) - (a as number))
+                .sort(([, a], [, b]) => (b as number) - (a as number))
                 .map(([filtro, count]) => (
-                <div key={filtro} className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 flex-1 truncate" title={filtro}>{filtro}</span>
-                  <div className="flex items-center w-32">
-                    <div className="w-24 bg-gray-200 rounded-full h-2 mr-3">
-                      <div 
-                        className="bg-purple-500 h-2 rounded-full" 
-                        style={{ 
-                          width: `${estadisticas.totalAccesos > 0 ? (Number(count) / estadisticas.totalAccesos) * 100 : 0}%` 
-                        }}
-                      ></div>
+                  <div key={filtro} className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600 flex-1 truncate" title={filtro}>{filtro}</span>
+                    <div className="flex items-center w-32">
+                      <div className="w-24 bg-gray-200 rounded-full h-2 mr-3">
+                        <div
+                          className="bg-purple-500 h-2 rounded-full"
+                          style={{
+                            width: `${estadisticas.totalAccesos > 0 ? (Number(count) / estadisticas.totalAccesos) * 100 : 0}%`
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-semibold w-8 text-right">{count}</span>
                     </div>
-                    <span className="text-sm font-semibold w-8 text-right">{count}</span>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </div>
         </div>
@@ -422,8 +466,8 @@ const ReporteGlobal: React.FC = () => {
               <div className="flex justify-between p-2 bg-orange-50 rounded">
                 <span className="font-medium">Tasa de identificación retenida:</span>
                 <span className="font-semibold">
-                  {estadisticas.totalAccesos > 0 ? 
-                    `${((estadisticas.identificacionesRetenidas / estadisticas.totalAccesos) * 100).toFixed(1)}%` 
+                  {estadisticas.totalAccesos > 0 ?
+                    `${((estadisticas.identificacionesRetenidas / estadisticas.totalAccesos) * 100).toFixed(1)}%`
                     : '0%'}
                 </span>
               </div>
@@ -432,24 +476,24 @@ const ReporteGlobal: React.FC = () => {
               <div className="flex justify-between p-2 bg-red-50 rounded">
                 <span className="font-medium">Eficiencia en registro de salidas:</span>
                 <span className="font-semibold text-green-600">
-                  {estadisticas.totalAccesos > 0 ? 
-                    `${(((estadisticas.totalAccesos - estadisticas.accesosActivos) / estadisticas.totalAccesos) * 100).toFixed(1)}%` 
+                  {estadisticas.totalAccesos > 0 ?
+                    `${(((estadisticas.totalAccesos - estadisticas.accesosActivos) / estadisticas.totalAccesos) * 100).toFixed(1)}%`
                     : '0%'}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-purple-50 rounded">
                 <span className="font-medium">Visitantes con escolta:</span>
                 <span className="font-semibold">
-                  {estadisticas.totalAccesos > 0 ? 
-                    `${((estadisticas.conAcompanante / estadisticas.totalAccesos) * 100).toFixed(1)}%` 
+                  {estadisticas.totalAccesos > 0 ?
+                    `${((estadisticas.conAcompanante / estadisticas.totalAccesos) * 100).toFixed(1)}%`
                     : '0%'}
                 </span>
               </div>
               <div className="flex justify-between p-2 bg-gray-50 rounded">
                 <span className="font-medium">Accesos con Control de acceso asignado:</span>
                 <span className="font-semibold">
-                  {estadisticas.totalAccesos > 0 ? 
-                    `${((estadisticas.accesosConFiltro / estadisticas.totalAccesos) * 100).toFixed(1)}%` 
+                  {estadisticas.totalAccesos > 0 ?
+                    `${((estadisticas.accesosConFiltro / estadisticas.totalAccesos) * 100).toFixed(1)}%`
                     : '0%'}
                 </span>
               </div>
@@ -461,19 +505,19 @@ const ReporteGlobal: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border p-6 mt-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">📤 Exportar Reporte</h3>
           <div className="flex flex-wrap gap-4">
-            <button 
+            <button
               onClick={() => handleExportar('pdf')}
               className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg flex items-center"
             >
               📊 Exportar a PDF
             </button>
-            <button 
+            <button
               onClick={() => handleExportar('excel')}
               className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center"
             >
               📝 Exportar a Excel
             </button>
-            <button 
+            <button
               onClick={() => handleExportar('csv')}
               className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center"
             >

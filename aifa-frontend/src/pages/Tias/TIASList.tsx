@@ -2,23 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
-import type { TIASWithRelations } from '../../types';
+import type { TIASWithRelations, TIASDisponible } from '../../types';
 import Navbar from '../../components/Navbar';
 import Swal from 'sweetalert2';
-
-// Interface para la respuesta de Gafete disponibles
-interface TIASDisponible {
-    id: string;
-    tipo: string;
-    estado: boolean;
-    filtro?: {
-        id: number;
-        nombre: string;
-    };
-    _count: {
-        accesos: number;
-    };
-}
 
 const TIASList: React.FC = () => {
     const { usuario } = useAuth();
@@ -151,6 +137,14 @@ const TIASList: React.FC = () => {
         return matchesSearch && matchesFiltro;
     });
 
+    // Estadísticas dinámicas basadas en los TIAS filtrados
+    const estadisticas = {
+        total: filteredTIAS.length,
+        enUso: filteredTIAS.filter(t => estaEnUso(t)).length,
+        disponibles: filteredTIAS.filter(t => estaDisponible(t)).length,
+        filtrosUnicos: Array.from(new Set(filteredTIAS.map(t => t.filtroId).filter(Boolean))).length
+    };
+
     const filtrosUnicos = Array.from(new Set(tias.map(t => t.filtroId).filter(Boolean)));
 
     if (loading) {
@@ -191,27 +185,27 @@ const TIASList: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Estadísticas Rápidas - Actualizadas con datos reales de disponibilidad */}
+                {/* Estadísticas Rápidas - DINÁMICAS según filtros */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <div className="bg-white p-4 rounded-lg shadow-sm border">
-                        <div className="text-2xl font-bold text-blue-600">{tias.length}</div>
+                        <div className="text-2xl font-bold text-blue-600">{estadisticas.total}</div>
                         <div className="text-sm text-gray-600">Total TIAS</div>
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow-sm border">
                         <div className="text-2xl font-bold text-red-600">
-                            {tias.filter(t => estaEnUso(t)).length}
+                            {estadisticas.enUso}
                         </div>
                         <div className="text-sm text-gray-600">En Uso</div>
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow-sm border">
                         <div className="text-2xl font-bold text-green-600">
-                            {tiasDisponibles.size}
+                            {estadisticas.disponibles}
                         </div>
                         <div className="text-sm text-gray-600">Disponibles</div>
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow-sm border">
                         <div className="text-2xl font-bold text-purple-600">
-                            {filtrosUnicos.length}
+                            {estadisticas.filtrosUnicos}
                         </div>
                         <div className="text-sm text-gray-600">Controles de acceso Asignados</div>
                     </div>
