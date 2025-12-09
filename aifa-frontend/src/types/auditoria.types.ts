@@ -2,6 +2,8 @@ export interface LogFiltro {
   id: number;
   fecha: string;
   usuario: string;
+  nombre?: string;
+  email?: string;
   accion: string;
   tipo: 'ACCESO' | 'TURNO' | 'IDENTIFICACION' | 'REPORTE' | 'FILTRO' | 'SISTEMA' | 'TIAS';
   descripcion: string;
@@ -30,13 +32,57 @@ export interface DetalleAuditoria extends LogFiltro {
   };
   duracion?: number;
   detallesAdicionales?: {
-    sistema?: string;
-    version?: string;
     fechaConsulta?: string;
     usuarioAccion?: string;
     rolUsuario?: string;
     ubicacion?: string;
     identificacionVigente?: boolean;
+    esOperativo?: boolean;
+    [key: string]: any;
+  };
+  // Campos específicos según tipo
+  detalles: {
+    persona?: string;
+    identificacion?: string;
+    tias?: string;
+    tipoTIAS?: string;
+    turno?: string;
+    area?: string;
+    filtro?: string;
+    filtroId?: number;
+    
+    // Para ACCESOS
+    registradoPor?: string;
+    registradoPorEmail?: string;
+    registradoPorRol?: string;
+    
+    // Para IDENTIFICACIONES
+    primerAccesoId?: number;
+    personaPrimerAcceso?: string;
+    
+    // Para TIAS
+    tipo?: string;
+    
+    // Para FILTROS
+    nombre?: string;
+    descripcion?: string;
+    ubicacion?: string;
+    cantidad?: number;
+    estaActivo?: boolean;
+    usuarioCreador?: string;
+    usuariosAsignados?: string[];
+    
+    // Para REPORTES
+    tipoReporte?: string;
+    
+    // Para SISTEMA
+    tipoSistema?: string;
+    
+    // Campos comunes adicionales
+    creadoPor?: string;
+    accesosRelacionados?: number;
+    fechaCreacion?: string;
+    
     [key: string]: any;
   };
 }
@@ -55,8 +101,8 @@ export interface EstadisticasFiltro {
 
 export interface FiltrosLogs {
   tipo?: string;
-  fechaInicio: string;
-  fechaFin: string;
+  fechaInicio?: string;
+  fechaFin?: string;
   usuario: string;
   filtroId: string | number;
   page?: number;
@@ -70,7 +116,6 @@ export interface FiltroOption {
   cantidad?: number;
 }
 
-// NUEVO: Interface para la respuesta paginada
 export interface LogsFiltroResponse {
   logs: LogFiltro[];
   total: number;
@@ -78,7 +123,6 @@ export interface LogsFiltroResponse {
   currentPage: number;
 }
 
-// NUEVO: Interfaces para TIAS
 export interface TIASOption {
   id: string;
   tipo: string;

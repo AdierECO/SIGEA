@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { auditoriaService } from '../../services/auditoria.service';
 import type { LogFiltro, FiltrosLogs, FiltroOption, EstadisticasFiltro } from '../../types';
@@ -24,7 +24,7 @@ const LogsSistema: React.FC = () => {
     accesos: 0,
     turnos: 0,
     identificaciones: 0,
-    tias:0,
+    tias: 0,
     reportes: 0,
     actividadesHoy: 0,
     usuariosActivos: 0,
@@ -33,7 +33,52 @@ const LogsSistema: React.FC = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const elementosPorPagina = 50;
   const [totalLogs, setTotalLogs] = useState(0);
-  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [, setTotalPaginas] = useState(0);
+  const [cargandoCompleto, setCargandoCompleto] = useState(false);
+
+  // Función para extraer nombre y email del campo usuario
+  const extraerInfoUsuario = (usuarioString: string | undefined) => {
+    if (!usuarioString) return { nombre: 'Usuario no disponible', email: '' };
+    
+    // Si el usuario viene en formato "Nombre (email)"
+    const match = usuarioString.match(/^(.*?)\s*\((.*?)\)$/);
+    if (match) {
+      return { nombre: match[1].trim(), email: match[2].trim() };
+    }
+    
+    // Si solo viene el email
+    if (usuarioString.includes('@')) {
+      return { nombre: usuarioString.split('@')[0], email: usuarioString };
+    }
+    
+    // Si solo viene el nombre
+    return { nombre: usuarioString, email: '' };
+  };
+
+  // Filtrar logs por usuario/email en frontend
+  const logsFiltrados = useMemo(() => {
+    return logs.filter(log => {
+      // Extraer información del usuario para filtrar
+      const usuarioInfo = extraerInfoUsuario(log.usuario);
+      
+      // Filtro por usuario/email (respaldo en frontend)
+      const cumpleUsuario = !filtros.usuario || 
+        (usuarioInfo.nombre && usuarioInfo.nombre.toLowerCase().includes(filtros.usuario.toLowerCase())) ||
+        (usuarioInfo.email && usuarioInfo.email.toLowerCase().includes(filtros.usuario.toLowerCase())) ||
+        (log.usuario && log.usuario.toLowerCase().includes(filtros.usuario.toLowerCase()));
+
+      return cumpleUsuario;
+    });
+  }, [logs, filtros.usuario]);
+
+  // Paginación de logs filtrados
+  const totalFiltrados = logsFiltrados.length;
+  const totalPaginasFiltradas = Math.ceil(totalFiltrados / elementosPorPagina);
+  const inicio = (paginaActual - 1) * elementosPorPagina;
+  const fin = inicio + elementosPorPagina;
+  const logsPaginaActual = useMemo(() => {
+    return logsFiltrados.slice(inicio, fin);
+  }, [logsFiltrados, inicio, fin]);
 
   // Cargar Control de acceso activos
   useEffect(() => {
@@ -61,43 +106,168 @@ const LogsSistema: React.FC = () => {
     }
   };
 
+  // Función para cargar TODOS los logs paginadamente
+  const cargarTodosLosLogs = async (filtrosActuales: FiltrosLogs) => {
+    let todosLosLogs: LogFiltro[] = [];
+    const limit = 500; // Máximo por request
+    let totalPaginasAPI = 1;
+    
+    try {
+      setCargandoCompleto(true);
+      
+      // Cargar primera página para saber el total
+      const primeraRespuesta = await auditoriaService.getLogsFiltro({
+        ...filtrosActuales,
+        page: 1,
+        limit: limit
+      });
+      
+      totalPaginasAPI = primeraRespuesta.totalPages;
+      setTotalLogs(primeraRespuesta.total);
+      setTotalPaginas(primeraRespuesta.totalPages);
+      
+      // Procesar primera página
+      const logsPrimeraPagina = primeraRespuesta.logs.map((log: any) => {
+        let usuarioDisplay = 'Usuario no disponible';
+        
+        if (log.nombre || log.email) {
+          if (log.nombre && log.email) {
+            usuarioDisplay = `${log.nombre} (${log.email})`;
+          } else if (log.nombre) {
+            usuarioDisplay = log.nombre;
+          } else if (log.email) {
+            usuarioDisplay = log.email;
+          }
+        } else if (log.usuario) {
+          usuarioDisplay = log.usuario;
+        } else if (log.detalles?.usuario || log.detalles?.email) {
+          if (log.detalles.usuario && log.detalles.email) {
+            usuarioDisplay = `${log.detalles.usuario} (${log.detalles.email})`;
+          } else if (log.detalles.usuario) {
+            usuarioDisplay = log.detalles.usuario;
+          } else if (log.detalles.email) {
+            usuarioDisplay = log.detalles.email;
+          }
+        }
+        
+        return {
+          ...log,
+          usuario: usuarioDisplay
+        };
+      });
+      
+      todosLosLogs = [...todosLosLogs, ...logsPrimeraPagina];
+      
+      // Si hay más páginas, cargarlas también
+      if (totalPaginasAPI > 1) {
+        const paginasRestantes = Array.from({ length: totalPaginasAPI - 1 }, (_, i) => i + 2);
+        
+        // Cargar páginas restantes en paralelo (con limitación)
+        for (let i = 0; i < paginasRestantes.length; i += 5) { // 5 requests en paralelo máximo
+          const lotePaginas = paginasRestantes.slice(i, i + 5);
+          const promesas = lotePaginas.map(pagina => 
+            auditoriaService.getLogsFiltro({
+              ...filtrosActuales,
+              page: pagina,
+              limit: limit
+            })
+          );
+          
+          const resultados = await Promise.all(promesas);
+          
+          resultados.forEach((respuesta: any) => {
+            const logsPagina = respuesta.logs.map((log: any) => {
+              let usuarioDisplay = 'Usuario no disponible';
+              
+              if (log.nombre || log.email) {
+                if (log.nombre && log.email) {
+                  usuarioDisplay = `${log.nombre} (${log.email})`;
+                } else if (log.nombre) {
+                  usuarioDisplay = log.nombre;
+                } else if (log.email) {
+                  usuarioDisplay = log.email;
+                }
+              } else if (log.usuario) {
+                usuarioDisplay = log.usuario;
+              } else if (log.detalles?.usuario || log.detalles?.email) {
+                if (log.detalles.usuario && log.detalles.email) {
+                  usuarioDisplay = `${log.detalles.usuario} (${log.detalles.email})`;
+                } else if (log.detalles.usuario) {
+                  usuarioDisplay = log.detalles.usuario;
+                } else if (log.detalles.email) {
+                  usuarioDisplay = log.detalles.email;
+                }
+              }
+              
+              return {
+                ...log,
+                usuario: usuarioDisplay
+              };
+            });
+            
+            todosLosLogs = [...todosLosLogs, ...logsPagina];
+          });
+        }
+      }
+      
+      return todosLosLogs;
+      
+    } catch (error) {
+      console.error('Error cargando todos los logs:', error);
+      throw error;
+    } finally {
+      setCargandoCompleto(false);
+    }
+  };
+
   // Cargar logs y estadísticas
   useEffect(() => {
     const cargarDatos = async () => {
       setLoading(true);
       try {
+        // Preparar filtros para enviar (sin usuario para backend)
+        const filtrosParaBackend = {
+          tipo: filtros.tipo !== 'todos' ? filtros.tipo : undefined,
+          fechaInicio: filtros.fechaInicio || undefined,
+          fechaFin: filtros.fechaFin || undefined,
+          filtroId: filtros.filtroId !== 'todos' ? filtros.filtroId : undefined,
+          page: 1,
+          limit: 500
+        };
+
         // Cargar logs y estadísticas en paralelo
-        const [logsResponse] = await Promise.all([
-          auditoriaService.getLogsFiltro({
-            ...filtros,
-            page: paginaActual,
-            limit: elementosPorPagina
-          }),
-          cargarEstadisticas() // Cargar estadísticas también
+        const [todosLosLogs] = await Promise.all([
+          cargarTodosLosLogs(filtrosParaBackend as FiltrosLogs),
+          cargarEstadisticas() // Cargar estadísticas
         ]);
 
-        setLogs(logsResponse.logs);
-        setTotalLogs(logsResponse.total);
-        setTotalPaginas(logsResponse.totalPages);
+        setLogs(todosLosLogs);
+        setPaginaActual(1); // Resetear a página 1 cuando carguen nuevos datos
 
       } catch (error) {
         console.error('Error cargando logs:', error);
+        setLogs([]);
+        setTotalLogs(0);
+        setTotalPaginas(0);
       } finally {
         setLoading(false);
       }
     };
 
     cargarDatos();
-  }, [filtros, paginaActual]);
+  }, [filtros.tipo, filtros.fechaInicio, filtros.fechaFin, filtros.filtroId]);
 
-  // También cargar estadísticas cuando cambien los filtros principales
+  // Cargar estadísticas cuando cambien los filtros principales
   useEffect(() => {
     cargarEstadisticas();
   }, [filtros.tipo, filtros.filtroId]);
 
   const handleFiltroChange = (key: keyof FiltrosLogs, value: string) => {
     setFiltros(prev => ({ ...prev, [key]: value }));
-    setPaginaActual(1); // Resetear a primera página al cambiar filtros
+    // Solo resetear paginación si no es búsqueda de usuario
+    if (key !== 'usuario') {
+      setPaginaActual(1);
+    }
   };
 
   const handleLimpiarFiltros = () => {
@@ -109,6 +279,27 @@ const LogsSistema: React.FC = () => {
       filtroId: 'todos'
     });
     setPaginaActual(1);
+  };
+
+  // Función para formatear el usuario
+  const getUsuarioDisplay = (log: LogFiltro): string => {
+    // Si log.usuario ya está formateado como "Nombre (email)", lo usamos directamente
+    if (log.usuario && typeof log.usuario === 'string') {
+      return log.usuario;
+    }
+
+    // Si tenemos campos separados, los combinamos
+    if (log.nombre && log.email) {
+      return `${log.nombre} (${log.email})`;
+    }
+    if (log.nombre) {
+      return log.nombre;
+    }
+    if (log.email) {
+      return log.email;
+    }
+
+    return 'Usuario no disponible';
   };
 
   const getColorTipo = (tipo: string) => {
@@ -149,11 +340,11 @@ const LogsSistema: React.FC = () => {
 
       // Si es un timestamp de PostgreSQL o formato ISO
       let fecha: Date;
-      
+
       // Intentar parsear como fecha ISO
       if (fechaString.includes('T')) {
         fecha = new Date(fechaString);
-      } 
+      }
       // Si es un timestamp numérico
       else if (/^\d+$/.test(fechaString)) {
         fecha = new Date(parseInt(fechaString));
@@ -204,11 +395,11 @@ const LogsSistema: React.FC = () => {
 
   // Verificar si hay filtros activos
   const tieneFiltrosActivos = () => {
-    return filtros.tipo !== 'todos' || 
-           filtros.fechaInicio !== '' || 
-           filtros.fechaFin !== '' || 
-           filtros.usuario !== '' || 
-           filtros.filtroId !== 'todos';
+    return filtros.tipo !== 'todos' ||
+      filtros.fechaInicio !== '' ||
+      filtros.fechaFin !== '' ||
+      filtros.usuario !== '' ||
+      filtros.filtroId !== 'todos';
   };
 
   // Calcular estadísticas en tiempo real basadas en los logs actuales
@@ -230,7 +421,14 @@ const LogsSistema: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-gray-600">Cargando logs del sistema...</div>
+          <div className="text-gray-600">
+            {cargandoCompleto ? 'Cargando todos los registros...' : 'Cargando logs del sistema...'}
+          </div>
+          {cargandoCompleto && (
+            <div className="mt-2 text-sm text-gray-500">
+              Esto puede tomar unos momentos si hay muchos registros
+            </div>
+          )}
         </div>
       </div>
     );
@@ -238,7 +436,7 @@ const LogsSistema: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <Navbar/>
+      <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -331,10 +529,26 @@ const LogsSistema: React.FC = () => {
             </div>
           </div>
 
+          {/* Búsqueda de Usuario */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Buscar por Usuario/Email</label>
+            <input
+              type="text"
+              placeholder="Buscar por nombre o email..."
+              value={filtros.usuario}
+              onChange={(e) => handleFiltroChange('usuario', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
           <div className="flex justify-between items-center mt-4">
             <div className="text-sm text-gray-600">
-              Mostrando {logs.length} de {totalLogs} actividades
-              {totalPaginas > 0 && ` (Página ${paginaActual} de ${totalPaginas})`}
+              Mostrando {logsPaginaActual.length} de {totalFiltrados} actividades filtradas
+              {totalLogs > totalFiltrados && ` (de ${totalLogs} totales)`}
+              {totalPaginasFiltradas > 0 && ` (Página ${paginaActual} de ${totalPaginasFiltradas})`}
+              {cargandoCompleto && (
+                <span className="ml-2 text-blue-600 font-medium">• Cargando todos los registros...</span>
+              )}
               {tieneFiltrosActivos() && (
                 <span className="ml-2 text-blue-600 font-medium">• Filtros activos</span>
               )}
@@ -352,7 +566,6 @@ const LogsSistema: React.FC = () => {
           </div>
         </div>
 
-        {/* Resto del componente se mantiene igual */}
         {/* Tabla de Logs */}
         <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
           <div className="overflow-x-auto">
@@ -383,8 +596,12 @@ const LogsSistema: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {logs.map((log) => {
+                {logsPaginaActual.map((log) => {
                   const { fecha, hora } = formatFecha(log.fecha.toString());
+                  const usuarioDisplay = getUsuarioDisplay(log);
+                  // Extraer nombre y email para mostrarlos separados
+                  const usuarioInfo = extraerInfoUsuario(usuarioDisplay);
+
                   return (
                     <tr key={log.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -392,9 +609,29 @@ const LogsSistema: React.FC = () => {
                         <div className="text-sm text-gray-500">{hora}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 truncate" title={log.usuario}>
-                          {log.usuario}
-                        </div>
+                        {log.nombre ? (
+                          <>
+                            <div className="text-sm font-medium text-gray-900 truncate">
+                              {log.nombre}
+                            </div>
+                            {log.email && (
+                              <div className="text-xs text-gray-500 truncate">
+                                {log.email}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-sm font-medium text-gray-900 truncate" title={usuarioInfo.nombre}>
+                              {usuarioInfo.nombre}
+                            </div>
+                            {usuarioInfo.email && (
+                              <div className="text-xs text-gray-500 truncate" title={usuarioInfo.email}>
+                                {usuarioInfo.email}
+                              </div>
+                            )}
+                          </>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getColorTipo(log.tipo)}`}>
@@ -405,7 +642,7 @@ const LogsSistema: React.FC = () => {
                         <div className="text-sm font-medium text-gray-900">{log.accion}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div 
+                        <div
                           className="text-sm text-gray-700 max-w-md line-clamp-2 hover:line-clamp-none cursor-help"
                           title={log.descripcion}
                         >
@@ -437,15 +674,15 @@ const LogsSistema: React.FC = () => {
             </table>
           </div>
 
-          {logs.length === 0 && !loading && (
+          {logsPaginaActual.length === 0 && !loading && (
             <div className="text-center py-12 text-gray-500">
               <div className="text-4xl mb-4">🔍</div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 {tieneFiltrosActivos() ? 'No se encontraron resultados' : 'No hay registros de auditoría'}
               </h3>
               <p className="text-gray-600 mb-4">
-                {tieneFiltrosActivos() 
-                  ? 'Intenta ajustar los filtros para ver más resultados.' 
+                {tieneFiltrosActivos()
+                  ? 'Intenta ajustar los filtros para ver más resultados.'
                   : 'Los registros de auditoría aparecerán aquí cuando se realicen actividades en el sistema.'
                 }
               </p>
@@ -462,11 +699,11 @@ const LogsSistema: React.FC = () => {
         </div>
 
         {/* Paginación */}
-        {totalPaginas > 1 && (
+        {totalPaginasFiltradas > 1 && (
           <div className="bg-white px-6 py-4 border-t">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="text-sm text-gray-700">
-                Página {paginaActual} de {totalPaginas} • {totalLogs} registros totales
+                Página {paginaActual} de {totalPaginasFiltradas} • {totalFiltrados} registros filtrados
               </div>
               <div className="flex space-x-2">
                 <button
@@ -477,21 +714,20 @@ const LogsSistema: React.FC = () => {
                   ← Anterior
                 </button>
                 <div className="flex space-x-1">
-                  {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
+                  {Array.from({ length: Math.min(5, totalPaginasFiltradas) }, (_, i) => {
                     const pagina = paginaActual <= 3 ? i + 1 :
-                      paginaActual >= totalPaginas - 2 ? totalPaginas - 4 + i :
+                      paginaActual >= totalPaginasFiltradas - 2 ? totalPaginasFiltradas - 4 + i :
                         paginaActual - 2 + i;
-                    if (pagina < 1 || pagina > totalPaginas) return null;
+                    if (pagina < 1 || pagina > totalPaginasFiltradas) return null;
 
                     return (
                       <button
                         key={pagina}
                         onClick={() => setPaginaActual(pagina)}
-                        className={`px-3 py-2 border rounded-lg text-sm min-w-10 transition-colors ${
-                          pagina === paginaActual
+                        className={`px-3 py-2 border rounded-lg text-sm min-w-10 transition-colors ${pagina === paginaActual
                             ? 'bg-blue-500 text-white border-blue-500'
                             : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
+                          }`}
                       >
                         {pagina}
                       </button>
@@ -499,8 +735,8 @@ const LogsSistema: React.FC = () => {
                   })}
                 </div>
                 <button
-                  onClick={() => setPaginaActual(prev => Math.min(prev + 1, totalPaginas))}
-                  disabled={paginaActual === totalPaginas}
+                  onClick={() => setPaginaActual(prev => Math.min(prev + 1, totalPaginasFiltradas))}
+                  disabled={paginaActual === totalPaginasFiltradas}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 transition-colors flex items-center"
                 >
                   Siguiente →

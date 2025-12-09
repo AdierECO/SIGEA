@@ -65,6 +65,20 @@ const AuditoriaView: React.FC = () => {
     }
   };
 
+  // Función para formatear el usuario (nombre + email)
+  const formatUsuario = (detalle: DetalleAuditoria): string => {
+    if (detalle.nombre && detalle.email) {
+      return `${detalle.nombre} (${detalle.email})`;
+    }
+    if (detalle.nombre) {
+      return detalle.nombre;
+    }
+    if (detalle.email) {
+      return detalle.email;
+    }
+    return detalle.usuario || 'Usuario no disponible';
+  };
+
   // Función para separar fecha y hora si vienen juntas
   const separarFechaHora = (fechaCompleta: string) => {
     // Si la fecha ya viene separada (solo fecha)
@@ -92,40 +106,63 @@ const AuditoriaView: React.FC = () => {
     switch (detalle.tipo) {
       case 'ACCESO':
         return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">🚪 Detalles del Acceso</h3>
-            <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
-              {detalle.detalles.persona && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Persona:</span>
-                  <span className="font-medium text-right">{detalle.detalles.persona}</span>
-                </div>
-              )}
-              {detalle.detalles.identificacion && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Identificación:</span>
-                  <span className="font-mono font-medium">{detalle.detalles.identificacion}</span>
-                </div>
-              )}
-              {detalle.detalles.area && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Área:</span>
-                  <span className="font-medium">{detalle.detalles.area}</span>
-                </div>
-              )}
-              {detalle.detalles.filtro && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Control de acceso:</span>
-                  <span className="font-medium">{detalle.detalles.filtro}</span>
-                </div>
-              )}
-              {detalle.detalles.filtroId && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">ID Control de acceso:</span>
-                  <span className="font-mono font-medium">#{detalle.detalles.filtroId}</span>
-                </div>
-              )}
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">🚪 Detalles del Acceso</h3>
+              <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
+                {detalle.detalles.persona && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                    <span className="text-gray-600 text-sm sm:text-base">Persona:</span>
+                    <span className="font-medium text-right truncate">{detalle.detalles.persona}</span>
+                  </div>
+                )}
+                {detalle.detalles.identificacion && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                    <span className="text-gray-600 text-sm sm:text-base">Identificación:</span>
+                    <span className="font-mono font-medium text-sm sm:text-base truncate">{detalle.detalles.identificacion}</span>
+                  </div>
+                )}
+                {detalle.detalles.area && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                    <span className="text-gray-600 text-sm sm:text-base">Área:</span>
+                    <span className="font-medium text-right truncate">{detalle.detalles.area}</span>
+                  </div>
+                )}
+                {detalle.detalles.filtro && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                    <span className="text-gray-600 text-sm sm:text-base">Control de acceso:</span>
+                    <span className="font-medium text-right truncate">{detalle.detalles.filtro}</span>
+                  </div>
+                )}
+                {detalle.detalles.filtroId && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                    <span className="text-gray-600 text-sm sm:text-base">ID Control de acceso:</span>
+                    <span className="font-mono font-medium text-sm sm:text-base truncate">#{detalle.detalles.filtroId}</span>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Información del operativo para accesos */}
+            {(detalle.detalles.registradoPor || detalle.detalles.registradoPorEmail) && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">👤 Información del Operativo</h3>
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 space-y-3">
+                  {detalle.detalles.registradoPor && (
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                      <span className="text-gray-600 text-sm sm:text-base">Operativo:</span>
+                      <span className="font-medium text-blue-600 text-right truncate">{detalle.detalles.registradoPor}</span>
+                    </div>
+                  )}
+                  {detalle.detalles.registradoPorRol && (
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                      <span className="text-gray-600 text-sm sm:text-base">Rol:</span>
+                      <span className="font-medium text-right truncate">{detalle.detalles.registradoPorRol}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -135,15 +172,15 @@ const AuditoriaView: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900">⏰ Detalles del Turno</h3>
             <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
               {detalle.detalles.turno && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Nombre del Turno:</span>
-                  <span className="font-medium">{detalle.detalles.turno}</span>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                  <span className="text-gray-600 text-sm sm:text-base">Nombre del Turno:</span>
+                  <span className="font-medium text-right truncate">{detalle.detalles.turno}</span>
                 </div>
               )}
               {detalle.detalles.filtro && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Control de acceso Asignado:</span>
-                  <span className="font-medium">{detalle.detalles.filtro}</span>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                  <span className="text-gray-600 text-sm sm:text-base">Control de acceso Asignado:</span>
+                  <span className="font-medium text-right truncate">{detalle.detalles.filtro}</span>
                 </div>
               )}
             </div>
@@ -152,28 +189,76 @@ const AuditoriaView: React.FC = () => {
 
       case 'IDENTIFICACION':
         return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">🆔 Detalles de Identificación</h3>
-            <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
-              {detalle.detalles.identificacion && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Número:</span>
-                  <span className="font-mono font-medium">{detalle.detalles.identificacion}</span>
-                </div>
-              )}
-              {detalle.detalles.filtro && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Control de acceso Asociado:</span>
-                  <span className="font-medium">{detalle.detalles.filtro}</span>
-                </div>
-              )}
-              {detalle.detalles.filtroId && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">ID Filtro:</span>
-                  <span className="font-mono font-medium">#{detalle.detalles.filtroId}</span>
-                </div>
-              )}
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">🆔 Detalles de Identificación</h3>
+              <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
+                {detalle.detalles.identificacion && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                    <span className="text-gray-600 text-sm sm:text-base">Número:</span>
+                    <span className="font-mono font-medium text-sm sm:text-base truncate">{detalle.detalles.identificacion}</span>
+                  </div>
+                )}
+                {detalle.detalles.filtro && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                    <span className="text-gray-600 text-sm sm:text-base">Control de acceso Asociado:</span>
+                    <span className="font-medium text-right truncate">{detalle.detalles.filtro}</span>
+                  </div>
+                )}
+                {detalle.detalles.filtroId && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                    <span className="text-gray-600 text-sm sm:text-base">ID Control de acceso:</span>
+                    <span className="font-mono font-medium text-sm sm:text-base truncate">#{detalle.detalles.filtroId}</span>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Información del operativo para identificaciones */}
+            {(detalle.detalles.registradoPor || detalle.detalles.registradoPorEmail) && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">👤 Información del Operativo</h3>
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 space-y-3">
+                  {detalle.detalles.registradoPor && (
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                      <span className="text-gray-600 text-sm sm:text-base">Operativo:</span>
+                      <span className="font-medium text-blue-600 text-right truncate">{detalle.detalles.registradoPor}</span>
+                    </div>
+                  )}
+                  {detalle.detalles.registradoPorEmail && (
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                      <span className="text-gray-600 text-sm sm:text-base">Email operativo:</span>
+                      <span className="font-medium text-right truncate">{detalle.detalles.registradoPorEmail}</span>
+                    </div>
+                  )}
+                  {detalle.detalles.registradoPorRol && (
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                      <span className="text-gray-600 text-sm sm:text-base">Rol:</span>
+                      <span className="font-medium text-right truncate">{detalle.detalles.registradoPorRol}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Información del primer acceso relacionado */}
+            {detalle.detalles.personaPrimerAcceso && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">📋 Información del Primer Acceso</h3>
+                <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                    <span className="text-gray-600 text-sm sm:text-base">Persona del acceso:</span>
+                    <span className="font-medium text-right truncate">{detalle.detalles.personaPrimerAcceso}</span>
+                  </div>
+                  {detalle.detalles.primerAccesoId && (
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                      <span className="text-gray-600 text-sm sm:text-base">ID del acceso:</span>
+                      <span className="font-mono font-medium text-sm sm:text-base truncate">#{detalle.detalles.primerAccesoId}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -183,15 +268,15 @@ const AuditoriaView: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900">🔍 Detalles del Control de acceso</h3>
             <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
               {detalle.detalles.filtro && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Nombre:</span>
-                  <span className="font-medium">{detalle.detalles.filtro}</span>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                  <span className="text-gray-600 text-sm sm:text-base">Nombre:</span>
+                  <span className="font-medium text-right truncate">{detalle.detalles.filtro}</span>
                 </div>
               )}
               {detalle.detalles.filtroId && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">ID:</span>
-                  <span className="font-mono font-medium">#{detalle.detalles.filtroId}</span>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                  <span className="text-gray-600 text-sm sm:text-base">ID:</span>
+                  <span className="font-mono font-medium text-sm sm:text-base truncate">#{detalle.detalles.filtroId}</span>
                 </div>
               )}
             </div>
@@ -203,14 +288,14 @@ const AuditoriaView: React.FC = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">📊 Detalles del Reporte</h3>
             <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tipo de Reporte:</span>
-                <span className="font-medium">{detalle.accion}</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                <span className="text-gray-600 text-sm sm:text-base">Tipo de Reporte:</span>
+                <span className="font-medium text-right truncate">{detalle.accion}</span>
               </div>
               {detalle.detalles.filtro && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Filtro:</span>
-                  <span className="font-medium">{detalle.detalles.filtro}</span>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                  <span className="text-gray-600 text-sm sm:text-base">Filtro:</span>
+                  <span className="font-medium text-right truncate">{detalle.detalles.filtro}</span>
                 </div>
               )}
             </div>
@@ -222,13 +307,13 @@ const AuditoriaView: React.FC = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">⚙️ Detalles del Sistema</h3>
             <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Módulo:</span>
-                <span className="font-medium">{detalle.descripcion}</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                <span className="text-gray-600 text-sm sm:text-base">Módulo:</span>
+                <span className="font-medium text-right truncate">{detalle.descripcion}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Acción:</span>
-                <span className="font-medium">{detalle.accion}</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                <span className="text-gray-600 text-sm sm:text-base">Acción:</span>
+                <span className="font-medium text-right truncate">{detalle.accion}</span>
               </div>
             </div>
           </div>
@@ -239,13 +324,13 @@ const AuditoriaView: React.FC = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">📋 Detalles del Evento</h3>
             <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Acción:</span>
-                <span className="font-medium">{detalle.accion}</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                <span className="text-gray-600 text-sm sm:text-base">Acción:</span>
+                <span className="font-medium text-right truncate">{detalle.accion}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Descripción:</span>
-                <span className="font-medium text-right">{detalle.descripcion}</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                <span className="text-gray-600 text-sm sm:text-base">Descripción:</span>
+                <span className="font-medium text-right truncate">{detalle.descripcion}</span>
               </div>
             </div>
           </div>
@@ -284,165 +369,125 @@ const AuditoriaView: React.FC = () => {
     );
   }
 
-  const { fecha, hora, completa } = separarFechaHora(detalle.fecha);
+  const { fecha, hora } = separarFechaHora(detalle.fecha);
 
   return (
     <div className="min-h-screen bg-white py-8">
-      <Navbar/>
+      <Navbar />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header con Breadcrumb */}
         <div className="mb-8">
-          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4 overflow-x-auto pb-2">
             <button
               onClick={() => navigate('/logs/sistema')}
-              className="hover:text-blue-600 transition-colors hover:underline"
+              className="hover:text-blue-600 transition-colors hover:underline whitespace-nowrap"
             >
               Auditoría
             </button>
-            <span>›</span>
-            <span className="text-gray-900 font-medium">Detalles del registro</span>
+            <span className="whitespace-nowrap">›</span>
+            <span className="text-gray-900 font-medium whitespace-nowrap">Detalles del registro</span>
           </nav>
 
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="w-full sm:w-auto">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                 {getIconoTipo(detalle.tipo)} Detalles de Auditoría
               </h1>
-              <p className="text-gray-600">
-                Registro ID: <span className="font-mono bg-gray-100 px-2 py-1 rounded">#{detalle.id}</span>
+              <p className="text-gray-600 text-sm sm:text-base">
+                Registro ID: <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs sm:text-sm">#{detalle.id}</span>
               </p>
             </div>
-            <div className="text-right">
+            <div className="w-full sm:w-auto text-left sm:text-right">
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border ${getColorTipo(detalle.tipo)}`}>
                 {getIconoTipo(detalle.tipo)} {detalle.tipo}
               </span>
-              <div className="text-xs text-gray-500 mt-2 bg-gray-100 px-2 py-1 rounded">
-                {completa}
+              <div className="text-xs sm:text-sm text-gray-500 mt-2 flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+                <div className="bg-gray-100 px-2 py-1 rounded mb-1 sm:mb-0">{fecha}</div>
+                {hora && <div className="bg-gray-100 py-1 rounded">{hora}</div>}
               </div>
             </div>
           </div>
         </div>
 
         {/* Tarjetas de Resumen */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
+              <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
                 <span className="text-blue-600 text-xl">👤</span>
               </div>
-              <div>
+              <div className="min-w-0 flex-1 overflow-hidden">
                 <h3 className="text-sm font-medium text-gray-600">Usuario</h3>
-                <p className="text-lg font-semibold text-gray-900 truncate">{detalle.usuario}</p>
+                {detalle.nombre && detalle.email ? (
+                  <>
+                    <p className="text-base sm:text-lg font-semibold text-gray-900 truncate" title={detalle.nombre}>
+                      {detalle.nombre}
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-500 truncate" title={detalle.email}>
+                      {detalle.email}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-base sm:text-lg font-semibold text-gray-900 truncate" title={formatUsuario(detalle)}>
+                    {formatUsuario(detalle)}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-green-100 rounded-lg">
+              <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
                 <span className="text-green-600 text-xl">⚡</span>
               </div>
-              <div>
+              <div className="min-w-0 flex-1 overflow-hidden">
                 <h3 className="text-sm font-medium text-gray-600">Acción</h3>
-                <p className="text-lg font-semibold text-gray-900">{detalle.accion}</p>
+                <p className="text-base sm:text-lg font-semibold text-gray-900 truncate" title={detalle.accion}>
+                  {detalle.accion}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-500 truncate mt-1" title={detalle.descripcion}>
+                  {detalle.descripcion}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Navegación por Tabs */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
           <div className="border-b border-gray-200">
-            <nav className="flex overflow-x-auto space-x-8 px-6">
-              {['general', 'detalles', 'adicionales'].map((tab) => (
+            <nav className="flex overflow-x-auto space-x-4 sm:space-x-8 px-4 sm:px-6">
+              {['general', 'detalles'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-                    activeTab === tab
+                  className={`py-4 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap transition-colors flex-shrink-0 ${activeTab === tab
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   {tab === 'general' && '📋 Información General'}
                   {tab === 'detalles' && '📊 Detalles Específicos'}
-                  {tab === 'adicionales' && '🔧 Información Adicional'}
                 </button>
               ))}
             </nav>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {/* Tab: Información General */}
             {activeTab === 'general' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">📝 Descripción</h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border">
-                      <p className="text-gray-700">{detalle.descripcion}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">📅 Información Básica</h3>
-                    <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Fecha:</span>
-                        <span className="font-medium">{fecha}</span>
-                      </div>
-                      {hora && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Hora:</span>
-                          <span className="font-medium">{hora}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Tipo:</span>
-                        <span className={`font-medium ${getColorTipo(detalle.tipo)} px-2 py-1 rounded-full text-xs`}>
-                          {detalle.tipo}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Usuario:</span>
-                        <span className="font-medium">{detalle.usuario}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tab: Detalles Específicos */}
-            {activeTab === 'detalles' && (
-              <div className="space-y-6">
-                {renderDetallesEspecificos()}
-                
-                {detalle.parametros && Object.keys(detalle.parametros).length > 0 && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">⚙️ Parámetros de la Operación</h3>
-                    <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden shadow-lg">
-                      <pre className="text-green-400 p-4 text-sm overflow-x-auto font-mono bg-gray-900">
-                        {JSON.stringify(detalle.parametros, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Tab: Información Adicional */}
-            {activeTab === 'adicionales' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* INFORMACIÓN ADICIONAL - SE MANTIENE COMO ORIGINAL */}
                   {detalle.detallesAdicionales && Object.keys(detalle.detallesAdicionales).length > 0 && (
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold text-gray-900">🔧 Información del Sistema</h3>
                       <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
                         {Object.entries(detalle.detallesAdicionales).map(([key, value]) => (
-                          <div key={key} className="flex justify-between">
-                            <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
-                            <span className="font-medium text-right max-w-xs truncate" title={value as string}>
+                          <div key={key} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                            <span className="text-gray-600 text-sm sm:text-base capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                            <span className="font-medium text-right truncate max-w-xs" title={value as string}>
                               {value as string}
                             </span>
                           </div>
@@ -450,21 +495,21 @@ const AuditoriaView: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900">🛡️ Información de Auditoría</h3>
                     <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Consultado por:</span>
-                        <span className="font-medium">{usuario?.nombre} {usuario?.apellidos}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                        <span className="text-gray-600 text-sm sm:text-base">Consultado por:</span>
+                        <span className="font-medium text-right truncate">{usuario?.nombre} {usuario?.apellidos}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Rol:</span>
-                        <span className="font-medium capitalize">{usuario?.rol?.toLowerCase()}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                        <span className="text-gray-600 text-sm sm:text-base">Rol:</span>
+                        <span className="font-medium text-right capitalize">{usuario?.rol?.toLowerCase()}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Fecha de consulta:</span>
-                        <span className="font-medium">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                        <span className="text-gray-600 text-sm sm:text-base">Fecha de consulta:</span>
+                        <span className="font-medium text-right">
                           {new Date().toLocaleDateString('es-MX')} {new Date().toLocaleTimeString('es-MX', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -472,9 +517,9 @@ const AuditoriaView: React.FC = () => {
                           })}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">ID del registro:</span>
-                        <span className="font-mono font-medium">#{detalle.id}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                        <span className="text-gray-600 text-sm sm:text-base">ID del registro:</span>
+                        <span className="font-mono font-medium text-sm sm:text-base text-right">#{detalle.id}</span>
                       </div>
                     </div>
                   </div>
@@ -484,16 +529,15 @@ const AuditoriaView: React.FC = () => {
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900">📊 Resultado de la Operación</h3>
                     <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Estado:</span>
-                        <span className="font-medium text-green-600">{detalle.respuesta.mensaje}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                        <span className="text-gray-600 text-sm sm:text-base">Estado:</span>
+                        <span className="font-medium text-green-600 text-right">{detalle.respuesta.mensaje}</span>
                       </div>
                       {detalle.respuesta.datos && Object.keys(detalle.respuesta.datos).length > 0 && (
                         <div className="space-y-2">
-                          <span className="text-gray-600 block">Datos generados:</span>
+                          <span className="text-gray-600 block text-sm sm:text-base">Datos generados:</span>
                           <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden shadow-lg">
-
-                            <pre className="text-yellow-300 p-4 text-sm overflow-x-auto font-mono bg-gray-900">
+                            <pre className="text-yellow-300 p-4 text-xs sm:text-sm overflow-x-auto font-mono bg-gray-900">
                               {JSON.stringify(detalle.respuesta.datos, null, 2)}
                             </pre>
                           </div>
@@ -504,14 +548,38 @@ const AuditoriaView: React.FC = () => {
                 )}
               </div>
             )}
+
+            {/* Tab: Detalles Específicos */}
+            {activeTab === 'detalles' && (
+              <div className="space-y-6">
+                {renderDetallesEspecificos()}
+
+                {detalle.parametros && Object.keys(detalle.parametros).length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">⚙️ Parámetros de la Operación</h3>
+                    <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden shadow-lg">
+                      <pre className="text-green-400 p-4 text-xs sm:text-sm overflow-x-auto font-mono bg-gray-900">
+                        {JSON.stringify(detalle.parametros, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Acciones */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <button 
-            onClick={() => navigate('/logs/sistema')}
-            className="flex items-center space-x-2 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors w-full sm:w-auto justify-center"
+          <button
+            onClick={() => {
+              if (usuario?.rol === 'SUPERVISOR') {
+                navigate('/filtro');
+              } else {
+                navigate('/logs/sistema');
+              }
+            }}
+            className="flex items-center justify-center space-x-2 px-4 sm:px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors w-full sm:w-auto"
           >
             <span>←</span>
             <span>Volver al listado</span>

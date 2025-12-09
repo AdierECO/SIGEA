@@ -272,9 +272,6 @@ const AccesoList: React.FC = () => {
         <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-semibold">
           🚪 {filtro.nombre}
         </span>
-        <span className={`text-xs ${filtro.estaActivo ? 'text-green-600' : 'text-red-600'}`}>
-          {filtro.estaActivo ? 'Activo' : 'Inactivo'}
-        </span>
       </div>
     );
   };

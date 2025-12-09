@@ -7,7 +7,7 @@ interface AuthContextType {
   usuario: Usuario | null;
   token: string | null;
   login: (token: string, usuario: Usuario) => void;
-  logout: () => Promise<void>; // ← Ahora es async
+  logout: () => Promise<void>; 
   updateUsuario: (updatedData: Partial<Usuario>) => void;
   isAuthenticated: boolean;
   loading: boolean;

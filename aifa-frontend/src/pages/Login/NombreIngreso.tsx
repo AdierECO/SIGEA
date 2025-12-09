@@ -108,14 +108,14 @@ const NombreIngreso: React.FC = () => {
     }
   };
 
-  // ⭐ LOGOUT ASYNC ACTUALIZADO
+  //LOGOUT ASYNC ACTUALIZADO
   const handleLogout = async () => {
     try {
-      await logout(); // ← Ahora espera a que termine
+      await logout(); //
       navigate('/login');
     } catch (error) {
       console.error('Error en logout:', error);
-      navigate('/login'); // Redirigir igualmente
+      navigate('/login'); 
     }
   };
 

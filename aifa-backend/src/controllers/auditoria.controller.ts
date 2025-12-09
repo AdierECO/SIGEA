@@ -68,8 +68,6 @@ export class AuditoriaController {
         };
       }
 
-      console.log('🔍 Where clause:', JSON.stringify(where, null, 2));
-
       const [logs, total] = await Promise.all([
         prisma.auditoria.findMany({
           where,
@@ -88,6 +86,7 @@ export class AuditoriaController {
                 nombre: true,
                 apellidos: true,
                 area: true,
+                registradoPor: true, // ← Para ACCESOS
                 identificacion: {
                   select: {
                     tipo: true,
@@ -124,6 +123,14 @@ export class AuditoriaController {
                     id: true,
                     nombre: true
                   }
+                },
+                // Incluir accesos relacionados para obtener registradoPor
+                accesos: {
+                  select: {
+                    id: true,
+                    registradoPor: true
+                  },
+                  take: 1 // Solo el primer acceso
                 }
               }
             },
@@ -155,15 +162,49 @@ export class AuditoriaController {
 
       console.log(`📊 Encontrados ${logs.length} logs de ${total} total`);
 
+      // **Recopilar todos los emails de usuarios necesarios**
+      const userEmails = new Set<string>();
+
+      logs.forEach(log => {
+        // Email del usuario que realizó la auditoría
+        if (log.usuario?.email) userEmails.add(log.usuario.email);
+
+        // Email de registradoPor si es un ACCESO
+        if (log.tipo === 'ACCESO' && log.acceso?.registradoPor) {
+          userEmails.add(log.acceso.registradoPor);
+        }
+
+        // **Email de registradoPor si es una IDENTIFICACION (de sus accesos)**
+        if (log.tipo === 'IDENTIFICACION' && log.identificacion && log.identificacion?.accesos?.length > 0) {
+          const primerAcceso = log.identificacion.accesos[0];
+          if (primerAcceso.registradoPor) {
+            userEmails.add(primerAcceso.registradoPor);
+          }
+        }
+      });
+
+      // **Buscar usuarios por email**
+      const usuariosPorEmail = new Map<string, any>();
+      if (userEmails.size > 0) {
+        const usuarios = await prisma.usuario.findMany({
+          where: {
+            email: { in: Array.from(userEmails) }
+          },
+          select: {
+            id: true,
+            email: true,
+            nombre: true,
+            apellidos: true
+          }
+        });
+
+        usuarios.forEach(u => usuariosPorEmail.set(u.email, u));
+      }
+
       // Formatear respuesta
       const logsFormateados = logs.map(log => {
-        // Determinar tipo real
-        let tipoReal = log.tipo;
-        if (log.acceso) tipoReal = 'ACCESO';
-        else if (log.turno) tipoReal = 'TURNO';
-        else if (log.identificacion) tipoReal = 'IDENTIFICACION';
-        else if (log.tias) tipoReal = 'TIAS';
-        else if (log.filtro && log.tipo !== 'REPORTE') tipoReal = 'FILTRO';
+        // Mantener el tipo original
+        const tipoReal = log.tipo;
 
         // Determinar filtro
         let filtroNombre = log.filtro?.nombre;
@@ -180,6 +221,72 @@ export class AuditoriaController {
           filtroIdReal = log.tias.filtro.id;
         }
 
+        // **Determinar qué información mostrar**
+        let nombreMostrar = null;
+        let emailMostrar = null;
+        let usuarioMostrar = 'Usuario no disponible';
+
+        // **1. PARA ACCESOS: Mostrar el registradoPor**
+        if (log.tipo === 'ACCESO' && log.acceso?.registradoPor) {
+          const emailRegistrador = log.acceso.registradoPor;
+          const usuarioRegistrador = usuariosPorEmail.get(emailRegistrador);
+
+          if (usuarioRegistrador) {
+            nombreMostrar = usuarioRegistrador.nombre
+              ? `${usuarioRegistrador.nombre} ${usuarioRegistrador.apellidos || ''}`.trim()
+              : null;
+            emailMostrar = usuarioRegistrador.email || null;
+            usuarioMostrar = nombreMostrar && emailMostrar
+              ? `${nombreMostrar} (${emailMostrar})`
+              : (nombreMostrar || emailMostrar || 'Operativo');
+          } else {
+            nombreMostrar = null;
+            emailMostrar = emailRegistrador;
+            usuarioMostrar = emailRegistrador || 'Operativo';
+          }
+        }
+        // **2. PARA IDENTIFICACIONES: Mostrar registradoPor del primer acceso**
+        else if (log.tipo === 'IDENTIFICACION' && log.identificacion && log.identificacion?.accesos?.length > 0) {
+          const primerAcceso = log.identificacion.accesos[0];
+          if (primerAcceso.registradoPor) {
+            const emailRegistrador = primerAcceso.registradoPor;
+            const usuarioRegistrador = usuariosPorEmail.get(emailRegistrador);
+
+            if (usuarioRegistrador) {
+              nombreMostrar = usuarioRegistrador.nombre
+                ? `${usuarioRegistrador.nombre} ${usuarioRegistrador.apellidos || ''}`.trim()
+                : null;
+              emailMostrar = usuarioRegistrador.email || null;
+              usuarioMostrar = nombreMostrar && emailMostrar
+                ? `${nombreMostrar} (${emailMostrar})`
+                : (nombreMostrar || emailMostrar || 'Operativo');
+            } else {
+              nombreMostrar = null;
+              emailMostrar = emailRegistrador;
+              usuarioMostrar = emailRegistrador || 'Operativo';
+            }
+          } else if (log.usuario) {
+            // Fallback: usar el usuario normal
+            nombreMostrar = log.usuario.nombre
+              ? `${log.usuario.nombre} ${log.usuario.apellidos || ''}`.trim()
+              : null;
+            emailMostrar = log.usuario.email || null;
+            usuarioMostrar = nombreMostrar && emailMostrar
+              ? `${nombreMostrar} (${emailMostrar})`
+              : (nombreMostrar || emailMostrar || 'Usuario no disponible');
+          }
+        }
+        // **3. PARA OTROS TIPOS: Mostrar el usuario normal**
+        else if (log.usuario) {
+          nombreMostrar = log.usuario.nombre
+            ? `${log.usuario.nombre} ${log.usuario.apellidos || ''}`.trim()
+            : null;
+          emailMostrar = log.usuario.email || null;
+          usuarioMostrar = nombreMostrar && emailMostrar
+            ? `${nombreMostrar} (${emailMostrar})`
+            : (nombreMostrar || emailMostrar || 'Usuario no disponible');
+        }
+
         return {
           id: log.id,
           fecha: new Date(log.fechaCreacion).toLocaleString('es-MX', {
@@ -190,7 +297,8 @@ export class AuditoriaController {
             minute: '2-digit',
             hour12: true
           }),
-          usuario: log.usuario?.email || 'Usuario no disponible',
+          nombre: nombreMostrar,
+          email: emailMostrar,
           accion: log.accion,
           tipo: tipoReal,
           descripcion: log.descripcion,
@@ -202,7 +310,14 @@ export class AuditoriaController {
             turno: log.turno?.nombreTurno,
             area: log.acceso?.area,
             filtro: filtroNombre,
-            filtroId: filtroIdReal
+            filtroId: filtroIdReal,
+            // Nueva información para el frontend
+            registradoPorEmail:
+              log.tipo === 'ACCESO' ? log.acceso?.registradoPor || null :
+                log.tipo === 'IDENTIFICACION' && log.identificacion && log.identificacion?.accesos?.length > 0
+                  ? log.identificacion.accesos[0]?.registradoPor || null
+                  : null,
+            esOperativo: log.tipo === 'ACCESO' || log.tipo === 'IDENTIFICACION'
           }
         };
       });
@@ -322,8 +437,18 @@ export class AuditoriaController {
                   nombre: true,
                   apellidos: true,
                   horaEntrada: true,
-                  horaSalida: true
-                }
+                  horaSalida: true,
+                  registradoPor: true, 
+                  creador: {
+                    select: {
+                      id: true,
+                      email: true,
+                      nombre: true,
+                      apellidos: true
+                    }
+                  }
+                },
+                take: 1 
               }
             }
           },
@@ -374,6 +499,64 @@ export class AuditoriaController {
         return res.status(404).json({ error: 'Registro de auditoría no encontrado' });
       }
 
+      // **Función para buscar información del registradoPor por email**
+      const buscarRegistradoPor = async (email: string) => {
+        if (!email) return null;
+
+        const usuario = await prisma.usuario.findUnique({
+          where: {
+            email: email
+          },
+          select: {
+            id: true,
+            email: true,
+            nombre: true,
+            apellidos: true,
+            rol: true
+          }
+        });
+
+        return usuario;
+      };
+
+      // **Determinar email del registradoPor según el tipo**
+      let emailRegistradoPor = null;
+      let usuarioRegistrador = null;
+
+      if (auditoria.tipo === 'ACCESO' && auditoria.acceso?.registradoPor) {
+        emailRegistradoPor = auditoria.acceso.registradoPor;
+      } else if (auditoria.tipo === 'IDENTIFICACION' && auditoria.identificacion && auditoria.identificacion?.accesos.length > 0) {
+        const primerAcceso = auditoria.identificacion.accesos[0];
+        emailRegistradoPor = primerAcceso?.registradoPor || primerAcceso?.creador?.email || null;
+      }
+
+      // **Buscar información del registradoPor si existe**
+      if (emailRegistradoPor) {
+        usuarioRegistrador = await buscarRegistradoPor(emailRegistradoPor);
+      }
+
+      // **Determinar qué información mostrar**
+      let nombreMostrar = null;
+      let emailMostrar = null;
+
+      if ((auditoria.tipo === 'ACCESO' || auditoria.tipo === 'IDENTIFICACION') && usuarioRegistrador) {
+        // Para accesos e identificaciones, mostrar el registradoPor
+        nombreMostrar = usuarioRegistrador.nombre
+          ? `${usuarioRegistrador.nombre} ${usuarioRegistrador.apellidos || ''}`.trim()
+          : null;
+        emailMostrar = usuarioRegistrador.email || null;
+      } else if ((auditoria.tipo === 'ACCESO' || auditoria.tipo === 'IDENTIFICACION') && emailRegistradoPor) {
+        // Si no encontramos al usuario, al menos mostrar el email
+        nombreMostrar = null;
+        emailMostrar = emailRegistradoPor;
+      } else if (auditoria.usuario) {
+        // Para otros tipos o fallback, usar el usuario normal
+        nombreMostrar = auditoria.usuario.nombre
+          ? `${auditoria.usuario.nombre} ${auditoria.usuario.apellidos || ''}`.trim()
+          : null;
+        emailMostrar = auditoria.usuario.email || null;
+      }
+
       // Formatear la respuesta según el tipo de auditoría
       let detallesCompletos: any = {
         id: auditoria.id,
@@ -385,10 +568,10 @@ export class AuditoriaController {
           minute: '2-digit',
           hour12: true
         }),
-        usuario: auditoria.usuario?.email || 'Sistema',
+        nombre: nombreMostrar,
+        email: emailMostrar,
         accion: auditoria.accion,
         tipo: auditoria.tipo,
-        descripcion: auditoria.descripcion,
         recurso: `/api/${auditoria.tipo.toLowerCase()}`,
         duracion: 150,
         parametros: {},
@@ -398,9 +581,7 @@ export class AuditoriaController {
           datos: {}
         },
         detallesAdicionales: {
-          sistema: 'AIFA v1.0',
-          version: '1.2.3',
-          fechaConsulta: new Date().toLocaleString('es-MX', {
+          fechaCreacion: new Date(auditoria.fechaCreacion).toLocaleString('es-MX', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
@@ -433,7 +614,11 @@ export class AuditoriaController {
               horaSalida: auditoria.acceso.horaSalida,
               filtro: auditoria.acceso.filtro?.nombre,
               filtroId: auditoria.acceso.filtro?.id,
-              creadoPor: auditoria.acceso.creador?.email
+              creadoPor: auditoria.acceso.creador?.email,
+              // Información específica para accesos
+              registradoPor: usuarioRegistrador?.nombre || auditoria.acceso.registradoPor || 'No disponible',
+              registradoPorEmail: usuarioRegistrador?.email || auditoria.acceso.registradoPor || null,
+              registradoPorRol: usuarioRegistrador?.rol || 'Operativo'
             };
 
             detallesCompletos.parametros = {
@@ -458,7 +643,41 @@ export class AuditoriaController {
             };
 
             detallesCompletos.detallesAdicionales.ubicacion = auditoria.acceso.filtro?.ubicacion;
-            detallesCompletos.detallesAdicionales.identificacionVigente = auditoria.acceso.identificacion?.vigente;
+          }
+          break;
+
+        case 'IDENTIFICACION':
+          if (auditoria.identificacion) {
+            const primerAcceso = auditoria.identificacion.accesos[0];
+
+            detallesCompletos.detalles = {
+              tipo: auditoria.identificacion.tipo,
+              numero: auditoria.identificacion.numero,
+              vigente: auditoria.identificacion.vigente,
+              filtro: auditoria.identificacion.filtro?.nombre,
+              filtroId: auditoria.identificacion.filtro?.id,
+              accesosRelacionados: auditoria.identificacion.accesos.length,
+              // Información para identificaciones
+              primerAccesoId: primerAcceso?.id || null,
+              personaPrimerAcceso: primerAcceso ? `${primerAcceso.nombre} ${primerAcceso.apellidos}` : null,
+              registradoPor: usuarioRegistrador?.nombre || (primerAcceso?.registradoPor || primerAcceso?.creador?.nombre) || 'No disponible',
+              registradoPorEmail: usuarioRegistrador?.email || (primerAcceso?.registradoPor || primerAcceso?.creador?.email) || null,
+              registradoPorRol: usuarioRegistrador?.rol || 'Operativo'
+            };
+
+            detallesCompletos.parametros = {
+              tipo: auditoria.identificacion.tipo,
+              numero: auditoria.identificacion.numero,
+              vigente: auditoria.identificacion.vigente
+            };
+
+            detallesCompletos.respuesta.datos = {
+              idIdentificacion: auditoria.identificacion.id,
+              accesosAsociados: auditoria.identificacion.accesos.length
+            };
+
+            detallesCompletos.detallesAdicionales.ubicacion = auditoria.identificacion.filtro?.ubicacion;
+            detallesCompletos.detallesAdicionales.esOperativo = true;
           }
           break;
 
@@ -483,32 +702,6 @@ export class AuditoriaController {
               idTurno: auditoria.turno.id,
               usuariosAsignados: auditoria.turno.usuarios.length
             };
-          }
-          break;
-
-        case 'IDENTIFICACION':
-          if (auditoria.identificacion) {
-            detallesCompletos.detalles = {
-              tipo: auditoria.identificacion.tipo,
-              numero: auditoria.identificacion.numero,
-              vigente: auditoria.identificacion.vigente,
-              filtro: auditoria.identificacion.filtro?.nombre,
-              filtroId: auditoria.identificacion.filtro?.id,
-              accesosRelacionados: auditoria.identificacion.accesos.length
-            };
-
-            detallesCompletos.parametros = {
-              tipo: auditoria.identificacion.tipo,
-              numero: auditoria.identificacion.numero,
-              vigente: auditoria.identificacion.vigente
-            };
-
-            detallesCompletos.respuesta.datos = {
-              idIdentificacion: auditoria.identificacion.id,
-              accesosAsociados: auditoria.identificacion.accesos.length
-            };
-
-            detallesCompletos.detallesAdicionales.ubicacion = auditoria.identificacion.filtro?.ubicacion;
           }
           break;
 
@@ -587,6 +780,14 @@ export class AuditoriaController {
           };
           break;
 
+        case 'SISTEMA':
+          detallesCompletos.detalles = {
+            accion: auditoria.accion,
+            descripcion: auditoria.descripcion,
+            tipoSistema: auditoria.accion.includes('SESION') ? 'AUTENTICACION' : 'SISTEMA'
+          };
+          break;
+
         default:
           detallesCompletos.detalles = {
             accion: auditoria.accion,
@@ -619,7 +820,7 @@ export class AuditoriaController {
       const usuarioActual = (req as any).user;
 
       const where: any = {};
-      
+
       if (filtroId && filtroId !== 'todos') {
         const filtroIdNum = Number(filtroId);
         where.OR = [

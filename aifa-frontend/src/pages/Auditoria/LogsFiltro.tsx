@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { auditoriaService } from '../../services';
 import type { LogFiltro, FiltrosLogs, FiltroOption } from '../../types';
 import Navbar from '../../components/Navbar';
@@ -11,7 +11,7 @@ const LogsFiltro: React.FC = () => {
   const [loadingFiltros, setLoadingFiltros] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  
+
   const [filtros, setFiltros] = useState<FiltrosLogs>({
     tipo: 'todos',
     fechaInicio: '',
@@ -19,27 +19,93 @@ const LogsFiltro: React.FC = () => {
     usuario: '',
     filtroId: 'todos',
     page: 1,
-    limit: 50
+    limit: 10000 // Aumentar límite para cargar más registros
   });
-  
+
   const [paginaActual, setPaginaActual] = useState(1);
   const elementosPorPagina = 50;
   const [totalLogs, setTotalLogs] = useState(0);
-  const [totalPaginas, setTotalPaginas] = useState(0);
+
+  // Función para extraer nombre y email del campo usuario
+  const extraerInfoUsuario = (usuarioString: string | undefined) => {
+    if (!usuarioString) return { nombre: 'Usuario no disponible', email: '' };
+
+    // Si el usuario viene en formato "Nombre (email)"
+    const match = usuarioString.match(/^(.*?)\s*\((.*?)\)$/);
+    if (match) {
+      return { nombre: match[1].trim(), email: match[2].trim() };
+    }
+
+    // Si solo viene el email
+    if (usuarioString.includes('@')) {
+      return { nombre: usuarioString.split('@')[0], email: usuarioString };
+    }
+
+    // Si solo viene el nombre
+    return { nombre: usuarioString, email: '' };
+  };
 
   // Filtrar logs con respaldo en frontend para el usuario
-  const logsFiltrados = logs.filter(log => {
-    // Filtro por tipo
-    const cumpleTipo = filtros.tipo === 'todos' || !filtros.tipo 
-      ? (log.tipo === 'ACCESO' || log.tipo === 'FILTRO' || log.tipo === 'IDENTIFICACION')
-      : log.tipo === filtros.tipo;
+  const logsFiltrados = useMemo(() => {
+    return logs.filter(log => {
+      // Extraer información del usuario para filtrar
+      const usuarioInfo = extraerInfoUsuario(log.usuario);
 
-    // Filtro por usuario (respaldo en frontend si el backend no funciona)
-    const cumpleUsuario = !filtros.usuario || 
-      (log.usuario && log.usuario.toLowerCase().includes(filtros.usuario.toLowerCase()));
+      // Filtro por tipo
+      const cumpleTipo = filtros.tipo === 'todos' || !filtros.tipo
+        ? (log.tipo === 'ACCESO' || log.tipo === 'FILTRO' || log.tipo === 'IDENTIFICACION')
+        : log.tipo === filtros.tipo;
 
-    return cumpleTipo && cumpleUsuario;
-  });
+      // Filtro por usuario (respaldo en frontend si el backend no funciona)
+      const cumpleUsuario = !filtros.usuario ||
+        (usuarioInfo.nombre && usuarioInfo.nombre.toLowerCase().includes(filtros.usuario.toLowerCase())) ||
+        (usuarioInfo.email && usuarioInfo.email.toLowerCase().includes(filtros.usuario.toLowerCase())) ||
+        (log.usuario && log.usuario.toLowerCase().includes(filtros.usuario.toLowerCase()));
+
+      // Filtro por fecha inicio
+      const cumpleFechaInicio = !filtros.fechaInicio ||
+        (() => {
+          try {
+            const fechaLog = new Date(log.fecha);
+            const fechaInicio = new Date(filtros.fechaInicio);
+            fechaInicio.setHours(0, 0, 0, 0);
+            return fechaLog >= fechaInicio;
+          } catch {
+            return true;
+          }
+        })();
+
+      // Filtro por fecha fin
+      const cumpleFechaFin = !filtros.fechaFin ||
+        (() => {
+          try {
+            const fechaLog = new Date(log.fecha);
+            const fechaFin = new Date(filtros.fechaFin);
+            fechaFin.setHours(23, 59, 59, 999);
+            return fechaLog <= fechaFin;
+          } catch {
+            return true;
+          }
+        })();
+
+      // Filtro por control de acceso
+      const cumpleFiltroId = filtros.filtroId === 'todos' ||
+        !filtros.filtroId ||
+        (log.detalles.filtroId && log.detalles.filtroId.toString() === filtros.filtroId) ||
+        (!log.detalles.filtroId && filtros.filtroId === 'todos');
+
+      return cumpleTipo && cumpleUsuario && cumpleFechaInicio && cumpleFechaFin && cumpleFiltroId;
+    });
+  }, [logs, filtros.tipo, filtros.usuario, filtros.fechaInicio, filtros.fechaFin, filtros.filtroId]);
+
+  // Paginación de logs filtrados
+  const totalFiltrados = logsFiltrados.length;
+  const totalPaginasFiltradas = Math.ceil(totalFiltrados / elementosPorPagina);
+  const inicio = (paginaActual - 1) * elementosPorPagina;
+  const fin = inicio + elementosPorPagina;
+  const logsPaginaActual = useMemo(() => {
+    return logsFiltrados.slice(inicio, fin);
+  }, [logsFiltrados, inicio, fin]);
 
   // Cargar Controles de acceso activos
   const cargarFiltrosActivos = async () => {
@@ -59,24 +125,75 @@ const LogsFiltro: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const filtrosParaEnviar: FiltrosLogs = { 
-        ...filtros,
-        page: paginaActual,
-        limit: elementosPorPagina
+
+      const filtrosParaEnviar: Partial<FiltrosLogs> = {
+        page: 1,
+        limit: 500
       };
-      
-      const response = await auditoriaService.getLogsFiltro(filtrosParaEnviar);
-      
-      setLogs(response.logs || []);
+
+      // Solo enviar filtros si no son "todos" o están vacíos
+      if (filtros.tipo !== 'todos') {
+        filtrosParaEnviar.tipo = filtros.tipo;
+      }
+
+      if (filtros.fechaInicio) {
+        filtrosParaEnviar.fechaInicio = filtros.fechaInicio;
+      }
+
+      if (filtros.fechaFin) {
+        filtrosParaEnviar.fechaFin = filtros.fechaFin;
+      }
+
+      if (filtros.filtroId !== 'todos') {
+        filtrosParaEnviar.filtroId = filtros.filtroId;
+      }
+
+      const response = await auditoriaService.getLogsFiltro(filtrosParaEnviar as FiltrosLogs);
+
+      // Procesar logs para asegurar que el campo usuario esté bien formateado
+      const logsProcesados = (response.logs || []).map((log: any) => {
+        // Intentar diferentes estrategias para obtener el nombre de usuario
+        let usuarioDisplay = 'Usuario no disponible';
+
+        // Estrategia 1: Si hay campos nombre y email separados
+        if (log.nombre || log.email) {
+          if (log.nombre && log.email) {
+            usuarioDisplay = `${log.nombre} (${log.email})`;
+          } else if (log.nombre) {
+            usuarioDisplay = log.nombre;
+          } else if (log.email) {
+            usuarioDisplay = log.email;
+          }
+        }
+        // Estrategia 2: Si hay un campo usuario
+        else if (log.usuario) {
+          usuarioDisplay = log.usuario;
+        }
+        // Estrategia 3: Si hay detalles con información de usuario
+        else if (log.detalles?.usuario || log.detalles?.email) {
+          if (log.detalles.usuario && log.detalles.email) {
+            usuarioDisplay = `${log.detalles.usuario} (${log.detalles.email})`;
+          } else if (log.detalles.usuario) {
+            usuarioDisplay = log.detalles.usuario;
+          } else if (log.detalles.email) {
+            usuarioDisplay = log.detalles.email;
+          }
+        }
+
+        return {
+          ...log,
+          usuario: usuarioDisplay
+        };
+      });
+
+      setLogs(logsProcesados);
       setTotalLogs(response.total || 0);
-      setTotalPaginas(response.totalPages || 0);
+      setPaginaActual(1); // Resetear a página 1 cuando carguen nuevos datos
     } catch (error: any) {
       console.error('Error cargando logs:', error);
       setError(error.response?.data?.error || 'Error al cargar los accesos e identificaciones del Control de acceso');
       setLogs([]);
       setTotalLogs(0);
-      setTotalPaginas(0);
     } finally {
       setLoading(false);
     }
@@ -89,15 +206,14 @@ const LogsFiltro: React.FC = () => {
 
   useEffect(() => {
     cargarLogs();
-  }, [filtros.tipo, filtros.fechaInicio, filtros.fechaFin, filtros.usuario, filtros.filtroId, paginaActual]);
-
-  // Handler con debounce para búsqueda de usuario
-  const [timeoutId] = useState<NodeJS.Timeout | null>(null);
-  
+  }, [filtros.tipo, filtros.fechaInicio, filtros.fechaFin, filtros.filtroId]);
 
   const handleFiltroChange = (key: keyof FiltrosLogs, value: string) => {
     setFiltros(prev => ({ ...prev, [key]: value }));
-    setPaginaActual(1);
+    // Solo resetear paginación si no es búsqueda de usuario
+    if (key !== 'usuario') {
+      setPaginaActual(1);
+    }
   };
 
   const handleLimpiarFiltros = () => {
@@ -108,19 +224,10 @@ const LogsFiltro: React.FC = () => {
       usuario: '',
       filtroId: 'todos',
       page: 1,
-      limit: 50
+      limit: 500
     });
     setPaginaActual(1);
   };
-
-  // Limpiar timeout al desmontar
-  useEffect(() => {
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [timeoutId]);
 
   // Utilidades de UI
   const getColorTipo = (tipo: string) => {
@@ -153,7 +260,7 @@ const LogsFiltro: React.FC = () => {
       }
 
       let fecha: Date;
-      
+
       if (fechaString.includes('T')) {
         fecha = new Date(fechaString);
       } else if (/^\d+$/.test(fechaString)) {
@@ -201,11 +308,11 @@ const LogsFiltro: React.FC = () => {
 
   // Verificar si hay Controles de acceso activos
   const tieneFiltrosActivos = () => {
-    return filtros.tipo !== 'todos' || 
-           filtros.fechaInicio !== '' || 
-           filtros.fechaFin !== '' || 
-           filtros.usuario !== '' || 
-           filtros.filtroId !== 'todos';
+    return filtros.tipo !== 'todos' ||
+      filtros.fechaInicio !== '' ||
+      filtros.fechaFin !== '' ||
+      filtros.usuario !== '' ||
+      filtros.filtroId !== 'todos';
   };
 
   // Calcular estadísticas en tiempo real
@@ -219,16 +326,16 @@ const LogsFiltro: React.FC = () => {
       identificaciones: identificaciones.length,
       filtros: filtrosLogs.length,
       total: logsFiltrados.length,
-      accesosActivos: (filtros.tipo === 'todos' || filtros.tipo === 'ACCESO') 
+      accesosActivos: (filtros.tipo === 'todos' || filtros.tipo === 'ACCESO')
         ? accesos.filter(a => {
-            return a.accion.includes('entrada') || a.accion.includes('Entrada') || 
-                   !a.descripcion?.includes('salida');
-          }).length
+          return a.accion.includes('entrada') || a.accion.includes('Entrada') ||
+            !a.descripcion?.includes('salida');
+        }).length
         : 0,
       identificacionesVigentes: (filtros.tipo === 'todos' || filtros.tipo === 'IDENTIFICACION')
-        ? identificaciones.filter(i => 
-            i.descripcion?.includes('vigente') || !i.descripcion?.includes('entregada')
-          ).length
+        ? identificaciones.filter(i =>
+          i.descripcion?.includes('vigente') || !i.descripcion?.includes('entregada')
+        ).length
         : 0
     };
   };
@@ -248,7 +355,7 @@ const LogsFiltro: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <Navbar/>
+      <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -256,8 +363,8 @@ const LogsFiltro: React.FC = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">📋 Accesos e Identificaciones por Control de acceso</h1>
               <p className="text-gray-600">
-                {filtros.tipo === 'todos' 
-                  ? 'Registros de personas e identificaciones que pasaron por los filtros de seguridad' 
+                {filtros.tipo === 'todos'
+                  ? 'Registros de personas e identificaciones que pasaron por los filtros de seguridad'
                   : `Registros de ${filtros.tipo?.toLowerCase()} en los filtros de seguridad`
                 }
               </p>
@@ -274,7 +381,7 @@ const LogsFiltro: React.FC = () => {
                 <div className="text-red-800 font-medium">Error</div>
                 <div className="text-red-600 text-sm">{error}</div>
               </div>
-              <button 
+              <button
                 onClick={() => setError(null)}
                 className="ml-auto text-red-500 hover:text-red-700"
               >
@@ -290,21 +397,21 @@ const LogsFiltro: React.FC = () => {
             <div className="text-2xl font-bold text-blue-600">{statsRealtime.total}</div>
             <div className="text-sm text-gray-600">Total Registros</div>
           </div>
-          
+
           {(filtros.tipo === 'todos' || filtros.tipo === 'ACCESO') && (
             <div className="bg-white rounded-lg p-4 shadow-sm border hover:shadow-md transition-shadow">
               <div className="text-2xl font-bold text-green-600">{statsRealtime.accesos}</div>
               <div className="text-sm text-gray-600">Accesos</div>
             </div>
           )}
-          
+
           {(filtros.tipo === 'todos' || filtros.tipo === 'IDENTIFICACION') && (
             <div className="bg-white rounded-lg p-4 shadow-sm border hover:shadow-md transition-shadow">
               <div className="text-2xl font-bold text-purple-600">{statsRealtime.identificaciones}</div>
               <div className="text-sm text-gray-600">Identificaciones</div>
             </div>
           )}
-          
+
           {(filtros.tipo === 'todos' || filtros.tipo === 'FILTRO') && (
             <div className="bg-white rounded-lg p-4 shadow-sm border hover:shadow-md transition-shadow">
               <div className="text-2xl font-bold text-blue-600">{statsRealtime.filtros}</div>
@@ -368,12 +475,25 @@ const LogsFiltro: React.FC = () => {
             </div>
           </div>
 
+          {/* Búsqueda de Usuario */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Buscar por Usuario/Email</label>
+            <input
+              type="text"
+              placeholder="Buscar por nombre o email..."
+              value={filtros.usuario}
+              onChange={(e) => handleFiltroChange('usuario', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
           <div className="flex justify-between items-center mt-4">
             <div className="text-sm text-gray-600">
-              Mostrando {logsFiltrados.length} de {totalLogs} actividades
+              Mostrando {logsPaginaActual.length} de {totalFiltrados} actividades filtradas
+              {totalLogs > totalFiltrados && ` (de ${totalLogs} totales)`}
               {filtros.tipo !== 'todos' && ` • Filtrado por: ${filtros.tipo}`}
               {filtros.usuario && ` • Usuario: ${filtros.usuario}`}
-              {totalPaginas > 0 && ` (Página ${paginaActual} de ${totalPaginas})`}
+              {totalPaginasFiltradas > 0 && ` (Página ${paginaActual} de ${totalPaginasFiltradas})`}
               {tieneFiltrosActivos() && (
                 <span className="ml-2 text-blue-600 font-medium">• Filtros activos</span>
               )}
@@ -421,8 +541,11 @@ const LogsFiltro: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {logsFiltrados.map((log) => {
+                {logsPaginaActual.map((log) => {
                   const { fecha, hora } = formatFecha(log.fecha.toString());
+                  // Extraer nombre y email para mostrarlos separados
+                  const usuarioInfo = extraerInfoUsuario(log.usuario);
+
                   return (
                     <tr key={log.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -430,9 +553,14 @@ const LogsFiltro: React.FC = () => {
                         <div className="text-sm text-gray-500">{hora}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 truncate" title={log.usuario}>
-                          {log.usuario}
+                        <div className="text-sm font-medium text-gray-900 truncate" title={usuarioInfo.nombre}>
+                          {usuarioInfo.nombre}
                         </div>
+                        {usuarioInfo.email && (
+                          <div className="text-xs text-gray-500 truncate" title={usuarioInfo.email}>
+                            {usuarioInfo.email}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getColorTipo(log.tipo)}`}>
@@ -443,7 +571,7 @@ const LogsFiltro: React.FC = () => {
                         <div className="text-sm font-medium text-gray-900">{log.accion}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div 
+                        <div
                           className="text-sm text-gray-700 max-w-md line-clamp-2 hover:line-clamp-none cursor-help"
                           title={log.descripcion}
                         >
@@ -475,15 +603,15 @@ const LogsFiltro: React.FC = () => {
             </table>
           </div>
 
-          {logsFiltrados.length === 0 && !loading && (
+          {logsPaginaActual.length === 0 && !loading && (
             <div className="text-center py-12 text-gray-500">
               <div className="text-4xl mb-4">🔍</div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 {tieneFiltrosActivos() ? 'No se encontraron resultados' : 'No hay registros de accesos o identificaciones'}
               </h3>
               <p className="text-gray-600 mb-4">
-                {tieneFiltrosActivos() 
-                  ? 'Intenta ajustar los filtros para ver más resultados.' 
+                {tieneFiltrosActivos()
+                  ? 'Intenta ajustar los filtros para ver más resultados.'
                   : 'Los registros de accesos e identificaciones aparecerán aquí cuando se realicen actividades en el sistema.'
                 }
               </p>
@@ -500,11 +628,11 @@ const LogsFiltro: React.FC = () => {
         </div>
 
         {/* Paginación */}
-        {totalPaginas > 1 && (
+        {totalPaginasFiltradas > 1 && (
           <div className="bg-white px-6 py-4 border-t">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="text-sm text-gray-700">
-                Página {paginaActual} de {totalPaginas} • {totalLogs} registros totales
+                Página {paginaActual} de {totalPaginasFiltradas} • {totalFiltrados} registros filtrados
               </div>
               <div className="flex space-x-2">
                 <button
@@ -515,21 +643,20 @@ const LogsFiltro: React.FC = () => {
                   ← Anterior
                 </button>
                 <div className="flex space-x-1">
-                  {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
+                  {Array.from({ length: Math.min(5, totalPaginasFiltradas) }, (_, i) => {
                     const pagina = paginaActual <= 3 ? i + 1 :
-                      paginaActual >= totalPaginas - 2 ? totalPaginas - 4 + i :
+                      paginaActual >= totalPaginasFiltradas - 2 ? totalPaginasFiltradas - 4 + i :
                         paginaActual - 2 + i;
-                    if (pagina < 1 || pagina > totalPaginas) return null;
+                    if (pagina < 1 || pagina > totalPaginasFiltradas) return null;
 
                     return (
                       <button
                         key={pagina}
                         onClick={() => setPaginaActual(pagina)}
-                        className={`px-3 py-2 border rounded-lg text-sm min-w-10 transition-colors ${
-                          pagina === paginaActual
+                        className={`px-3 py-2 border rounded-lg text-sm min-w-10 transition-colors ${pagina === paginaActual
                             ? 'bg-blue-500 text-white border-blue-500'
                             : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
+                          }`}
                       >
                         {pagina}
                       </button>
@@ -537,8 +664,8 @@ const LogsFiltro: React.FC = () => {
                   })}
                 </div>
                 <button
-                  onClick={() => setPaginaActual(prev => Math.min(prev + 1, totalPaginas))}
-                  disabled={paginaActual === totalPaginas}
+                  onClick={() => setPaginaActual(prev => Math.min(prev + 1, totalPaginasFiltradas))}
+                  disabled={paginaActual === totalPaginasFiltradas}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 transition-colors flex items-center"
                 >
                   Siguiente →

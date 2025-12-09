@@ -173,8 +173,8 @@ export class TIASController {
       await prisma.auditoria.create({
         data: {
           tipo: 'TIAS',
-          accion: 'CREACION_TIAS',
-          descripcion: `Nuevo TIAS creado: ${data.id} - ${data.tipo}`,
+          accion: 'CREACION_GIA',
+          descripcion: `Nueva GIA creado: ${data.id} - ${data.tipo}`,
           usuarioId: usuario.id,
           tiasId: tias.id,
           filtroId: tias.filtroId
@@ -268,8 +268,8 @@ export class TIASController {
         await prisma.auditoria.create({
           data: {
             tipo: 'TIAS',
-            accion: 'CREACION_MASIVA_TIAS',
-            descripcion: `Se crearon ${resultadoCreacion.count} TIAS en el rango ${inicio}-${fin} (tipo: ${tipo})`,
+            accion: 'CREACION_MASIVA_GIAS',
+            descripcion: `Se crearon ${resultadoCreacion.count} GIAS en el rango ${inicio}-${fin} (tipo: ${tipo})`,
             usuarioId: usuario.id,
             filtroId: filtroIdNum 
           }
@@ -367,8 +367,8 @@ export class TIASController {
       await prisma.auditoria.create({
         data: {
           tipo: 'TIAS',
-          accion: 'ACTUALIZACION_TIAS',
-          descripcion: `TIAS ${id} actualizado`,
+          accion: 'ACTUALIZACION_GIAS',
+          descripcion: `GIA ${id} actualizado`,
           usuarioId: usuario.id,
           tiasId: id,
           filtroId: tias.filtroId
@@ -420,8 +420,8 @@ export class TIASController {
       await prisma.auditoria.create({
         data: {
           tipo: 'TIAS',
-          accion: 'ELIMINACION_TIAS',
-          descripcion: `TIAS ${id} eliminado`,
+          accion: 'ELIMINACION_GIA',
+          descripcion: `GIA ${id} eliminada`,
           usuarioId: usuario.id,
           filtroId: tiasExistente.filtroId
         }

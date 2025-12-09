@@ -317,7 +317,7 @@ const AccesoEdit: React.FC = () => {
       return;
     }
 
-    // Validación de escolta - AHORA también verifica si el área lo requiere
+    // Validación de escolta - verifica si el área lo requiere
     if (requiereAcompananteArea && !formData.tieneAcompanante) {
       showAlert('Error', 'Esta área requiere escolta obligatoriamente', 'error');
       return;
